@@ -13,17 +13,10 @@ public class Army
 
     public Unit? FirstAliveUnit => Units.FirstOrDefault(u => u.IsAlive);
 
+    public decimal TotalPrice => Units.Sum(u => u.Price);
+
     public void RemoveDeadUnits()
     {
         Units.RemoveAll(u => !u.IsAlive);
-    }
-
-    public void PrintStatus()
-    {
-        Console.WriteLine($"  {Name} ({Units.Count} юнитов, цена: {Units.Sum(u => u.Price):F0}):");
-        for (int i = 0; i < Units.Count; i++)
-        {
-            Console.WriteLine($"    {i + 1}. {Units[i]}");
-        }
     }
 }

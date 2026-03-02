@@ -12,27 +12,37 @@ public class Battlefield
     public int TurnNumber { get; set; }
 
     [JsonIgnore]
+    public IBattleLogger Logger { get; set; } = new BattleLog();
+
+    [JsonIgnore]
     public bool IsGameOver => Army1.IsDefeated || Army2.IsDefeated;
+
+    public Battlefield() { }
+
+    public Battlefield(IBattleLogger logger)
+    {
+        Logger = logger;
+    }
 
     public void MakeTurn()
     {
         if (IsGameOver)
         {
-            BattleLog.GameOver(GetWinner());
+            Logger.GameOver(GetWinner());
             return;
         }
 
         TurnNumber++;
-        BattleLog.TurnHeader(TurnNumber);
+        Logger.TurnHeader(TurnNumber);
 
         MeleePhase();
         SpecialAbilityPhase();
         CleanupPhase();
 
-        PrintArmyStatus();
+        Logger.PrintArmyStatus(Army1, Army2);
 
         if (IsGameOver)
-            BattleLog.GameOver(GetWinner());
+            Logger.GameOver(GetWinner());
     }
 
     public void PlayToEnd()
@@ -45,15 +55,12 @@ public class Battlefield
 
     public void PrintArmyStatus()
     {
-        Console.WriteLine();
-        Army1.PrintStatus();
-        Army2.PrintStatus();
-        Console.WriteLine();
+        Logger.PrintArmyStatus(Army1, Army2);
     }
 
     private void MeleePhase()
     {
-        BattleLog.PhaseHeader("Ближний бой");
+        Logger.PhaseHeader("Ближний бой");
 
         var attacker = Army1.FirstUnit;
         var defender = Army2.FirstUnit;
@@ -62,19 +69,19 @@ public class Battlefield
             return;
 
         int damage = attacker.Attack(defender);
-        BattleLog.MeleeAttack(attacker, defender, damage);
+        Logger.MeleeAttack(attacker, defender, damage);
 
         if (!defender.IsAlive)
         {
-            BattleLog.UnitDied(defender, Army2.Name);
+            Logger.UnitDied(defender, Army2.Name);
             return;
         }
 
         int counterDamage = defender.Attack(attacker);
-        BattleLog.CounterAttack(defender, attacker, counterDamage);
+        Logger.CounterAttack(defender, attacker, counterDamage);
 
         if (!attacker.IsAlive)
-            BattleLog.UnitDied(attacker, Army1.Name);
+            Logger.UnitDied(attacker, Army1.Name);
     }
 
     private void SpecialAbilityPhase()
@@ -83,7 +90,7 @@ public class Battlefield
         if (!hasAbilities)
             return;
 
-        BattleLog.PhaseHeader("Специальные способности");
+Logger.PhaseHeader("Специальные способности");
 
         ProcessArmyAbilities(Army1, Army2);
         ProcessArmyAbilities(Army2, Army1);
@@ -99,7 +106,7 @@ public class Battlefield
         return false;
     }
 
-    private static void ProcessArmyAbilities(Army allies, Army enemies)
+    private void ProcessArmyAbilities(Army allies, Army enemies)
     {
         for (int i = 1; i < allies.Units.Count; i++)
         {
@@ -117,15 +124,15 @@ public class Battlefield
 
             if (ability.Range < position)
             {
-                BattleLog.AbilityOutOfRange(allies.Units[i], position, ability.Range);
+                Logger.AbilityOutOfRange(allies.Units[i], position, ability.Range);
                 continue;
             }
 
             int damage = ability.UseAbility(target);
-            BattleLog.AbilityUsed(allies.Units[i], target, damage, position, ability.Range);
+            Logger.AbilityUsed(allies.Units[i], target, damage, position, ability.Range);
 
             if (!target.IsAlive)
-                BattleLog.UnitDied(target, enemies.Name);
+                Logger.UnitDied(target, enemies.Name);
         }
     }
 
@@ -139,8 +146,8 @@ public class Battlefield
 
         if (deadArmy1 + deadArmy2 > 0)
         {
-            BattleLog.PhaseHeader("Очистка поля");
-            BattleLog.CleanupResult(deadArmy1, deadArmy2, Army1, Army2);
+            Logger.PhaseHeader("Очистка поля");
+            Logger.CleanupResult(deadArmy1, deadArmy2, Army1, Army2);
         }
     }
 

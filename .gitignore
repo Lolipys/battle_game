@@ -3,5 +3,4 @@ obj/
 *.user
 *.suo
 .vs/
-battle_save.json
-BattleGame.csproj
+saves/

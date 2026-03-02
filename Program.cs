@@ -1,8 +1,12 @@
 using BattleGame;
+using BattleGame.Interfaces;
 using BattleGame.Services;
 
-const string SaveFile = "battle_save.json";
+string savesDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "saves"));
+Directory.CreateDirectory(savesDir);
+string SaveFile = Path.Combine(savesDir, "battle_save.json");
 
+IBattleLogger logger = new BattleLog();
 Battlefield? battlefield = null;
 
 while (true)
@@ -31,13 +35,13 @@ while (true)
             RunGameLoop(battlefield);
             break;
 
-        case "3":
-            Console.Write($"Путь к файлу [{SaveFile}]: ");
-            string? path = Console.ReadLine()?.Trim();
-            if (string.IsNullOrEmpty(path)) path = SaveFile;
-            battlefield = GameSerializer.Load(path);
+            case "3":
+            battlefield = GameSerializer.Load(SaveFile);
             if (battlefield != null)
+            {
+                battlefield.Logger = logger;
                 RunGameLoop(battlefield);
+            }
             break;
 
         case "0":
@@ -50,15 +54,15 @@ while (true)
     }
 }
 
-static Battlefield CreateRandomGame()
+Battlefield CreateRandomGame()
 {
     Console.Write("Размер армий (количество юнитов): ");
     int size = ReadPositiveInt();
 
-    var bf = new Battlefield
+    var bf = new Battlefield(logger)
     {
-        Army1 = ArmyFactory.CreateRandom("Армия 1", size),
-        Army2 = ArmyFactory.CreateRandom("Армия 2", size)
+        Army1 = ArmyFactory.CreateRandom("Армия 1", size, "A1"),
+        Army2 = ArmyFactory.CreateRandom("Армия 2", size, "A2")
     };
 
     Console.WriteLine("\nАрмии созданы:");
@@ -66,12 +70,12 @@ static Battlefield CreateRandomGame()
     return bf;
 }
 
-static Battlefield CreateManualGame()
+Battlefield CreateManualGame()
 {
-    var bf = new Battlefield
+    var bf = new Battlefield(logger)
     {
-        Army1 = ArmyFactory.CreateManual("Армия 1"),
-        Army2 = ArmyFactory.CreateManual("Армия 2")
+        Army1 = ArmyFactory.CreateManual("Армия 1", "A1"),
+        Army2 = ArmyFactory.CreateManual("Армия 2", "A2")
     };
 
     Console.WriteLine("\nАрмии созданы:");
@@ -79,7 +83,7 @@ static Battlefield CreateManualGame()
     return bf;
 }
 
-static void RunGameLoop(Battlefield battlefield)
+void RunGameLoop(Battlefield battlefield)
 {
     while (true)
     {
@@ -117,10 +121,7 @@ static void RunGameLoop(Battlefield battlefield)
                 break;
 
             case "4":
-                Console.Write($"Путь для сохранения [{SaveFile}]: ");
-                string? savePath = Console.ReadLine()?.Trim();
-                if (string.IsNullOrEmpty(savePath)) savePath = SaveFile;
-                GameSerializer.Save(battlefield, savePath);
+                GameSerializer.Save(battlefield, SaveFile);
                 break;
 
             case "0":
@@ -133,7 +134,7 @@ static void RunGameLoop(Battlefield battlefield)
     }
 }
 
-static int ReadPositiveInt()
+int ReadPositiveInt()
 {
     while (true)
     {

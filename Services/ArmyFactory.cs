@@ -6,19 +6,19 @@ public static class ArmyFactory
 {
     private static readonly Random Rng = new();
 
-    public static Army CreateRandom(string name, int unitCount)
+    public static Army CreateRandom(string name, int unitCount, string tag = "")
     {
         var army = new Army { Name = name };
 
         for (int i = 0; i < unitCount; i++)
         {
-            army.Units.Add(CreateRandomUnit(i + 1));
+            army.Units.Add(CreateRandomUnit(i + 1, tag));
         }
 
         return army;
     }
 
-    public static Army CreateManual(string name)
+    public static Army CreateManual(string name, string tag = "")
     {
         var army = new Army { Name = name };
 
@@ -37,17 +37,17 @@ public static class ArmyFactory
 
             Unit unit = type switch
             {
-                1 => CreateHeavyInfantry(i + 1),
-                2 => CreateLightInfantry(i + 1),
-                3 => CreateArcher(i + 1),
-                _ => CreateRandomUnit(i + 1)
+                1 => CreateHeavyInfantry(i + 1, tag),
+                2 => CreateLightInfantry(i + 1, tag),
+                3 => CreateArcher(i + 1, tag),
+                _ => CreateRandomUnit(i + 1, tag)
             };
 
             Console.Write($"  Использовать стандартные характеристики? ({unit}) [y/n]: ");
             string? answer = Console.ReadLine()?.Trim().ToLower();
 
             if (answer == "n")
-                unit = CustomizeUnit(unit, i + 1);
+                unit = CustomizeUnit(unit, i + 1, tag);
 
             army.Units.Add(unit);
         }
@@ -55,38 +55,43 @@ public static class ArmyFactory
         return army;
     }
 
-    private static Unit CreateRandomUnit(int number)
+    private static Unit CreateRandomUnit(int number, string tag)
     {
         return Rng.Next(3) switch
         {
-            0 => CreateHeavyInfantry(number),
-            1 => CreateLightInfantry(number),
-            _ => CreateArcher(number)
+            0 => CreateHeavyInfantry(number, tag),
+            1 => CreateLightInfantry(number, tag),
+            _ => CreateArcher(number, tag)
         };
     }
 
-    private static HeavyInfantry CreateHeavyInfantry(int number)
+    private static string MakeName(string type, int number, string tag)
+    {
+        return string.IsNullOrEmpty(tag) ? $"{type}#{number}" : $"{tag}:{type}#{number}";
+    }
+
+    private static HeavyInfantry CreateHeavyInfantry(int number, string tag)
     {
         return new HeavyInfantry(
-            name: $"Heavy#{number}",
+            name: MakeName("Heavy", number, tag),
             damage: Vary(HeavyInfantry.BaseDamage, 4),
             defense: Vary(HeavyInfantry.BaseDefense, 3),
             health: Vary(HeavyInfantry.BaseHealth, 20));
     }
 
-    private static LightInfantry CreateLightInfantry(int number)
+    private static LightInfantry CreateLightInfantry(int number, string tag)
     {
         return new LightInfantry(
-            name: $"Light#{number}",
+            name: MakeName("Light", number, tag),
             damage: Vary(LightInfantry.BaseDamage, 5),
             defense: Vary(LightInfantry.BaseDefense, 2),
             health: Vary(LightInfantry.BaseHealth, 15));
     }
 
-    private static Archer CreateArcher(int number)
+    private static Archer CreateArcher(int number, string tag)
     {
         return new Archer(
-            name: $"Archer#{number}",
+            name: MakeName("Archer", number, tag),
             damage: Vary(Archer.BaseDamage, 2),
             defense: Vary(Archer.BaseDefense, 1),
             health: Vary(Archer.BaseHealth, 10),
@@ -94,7 +99,7 @@ public static class ArmyFactory
             power: Vary(Archer.BasePower, 5));
     }
 
-    private static Unit CustomizeUnit(Unit template, int number)
+    private static Unit CustomizeUnit(Unit template, int number, string tag)
     {
         Console.Write($"    Урон [{template.Damage}]: ");
         int damage = ReadIntOrDefault(template.Damage);
@@ -109,13 +114,13 @@ public static class ArmyFactory
             int range = ReadIntOrDefault(archer.Range);
             Console.Write($"    Сила стрелы [{archer.Power}]: ");
             int power = ReadIntOrDefault(archer.Power);
-            return new Archer($"Archer#{number}", damage, defense, health, range, power);
+            return new Archer(MakeName("Archer", number, tag), damage, defense, health, range, power);
         }
 
         if (template is HeavyInfantry)
-            return new HeavyInfantry($"Heavy#{number}", damage, defense, health);
+            return new HeavyInfantry(MakeName("Heavy", number, tag), damage, defense, health);
 
-        return new LightInfantry($"Light#{number}", damage, defense, health);
+        return new LightInfantry(MakeName("Light", number, tag), damage, defense, health);
     }
 
     private static int Vary(int baseValue, int variance)
