@@ -2,23 +2,34 @@ using BattleGame.Units;
 
 namespace BattleGame.Services;
 
+// Фабрика армий — создаёт армии случайно или вручную.
+// Паттерн Factory: инкапсулирует логику создания объектов.
+// static — у фабрики нет состояния, не нужно создавать экземпляр.
 public static class ArmyFactory
 {
     private static readonly Random Rng = new();
 
-    public static Army CreateRandom(string name, int unitCount)
+    // Создание армии со случайным составом
+    public static Army CreateRandom(string name, int unitCount, string tag = "")
     {
         var army = new Army { Name = name };
 
         for (int i = 0; i < unitCount; i++)
         {
-            army.Units.Add(CreateRandomUnit(i + 1));
+            Unit unit = CreateRandomUnit(i + 1, tag);
+
+            // 20% шанс получить щит (паттерн Proxy)
+            if (Rng.Next(5) == 0)
+                unit = new UnitProxy(unit, Vary(UnitProxy.BaseShield, 10));
+
+            army.Units.Add(unit);
         }
 
         return army;
     }
 
-    public static Army CreateManual(string name)
+    // Создание армии вручную: пользователь выбирает тип каждого юнита
+    public static Army CreateManual(string name, string tag = "")
     {
         var army = new Army { Name = name };
 
@@ -32,22 +43,35 @@ public static class ArmyFactory
             Console.WriteLine("  1. Тяжёлый пехотинец");
             Console.WriteLine("  2. Лёгкий пехотинец");
             Console.WriteLine("  3. Лучник");
+            Console.WriteLine("  4. Хилер");
+            Console.WriteLine("  5. Маг");
+            Console.WriteLine("  6. Гуляй-город");
             Console.Write("  Тип: ");
-            int type = ReadInt(1, 3);
+            int type = ReadInt(1, 6);
 
+            // Switch expression — компактный выбор типа юнита
             Unit unit = type switch
             {
-                1 => CreateHeavyInfantry(i + 1),
-                2 => CreateLightInfantry(i + 1),
-                3 => CreateArcher(i + 1),
-                _ => CreateRandomUnit(i + 1)
+                1 => CreateHeavyInfantry(i + 1, tag),
+                2 => CreateLightInfantry(i + 1, tag),
+                3 => CreateArcher(i + 1, tag),
+                4 => CreateHealer(i + 1, tag),
+                5 => CreateWizard(i + 1, tag),
+                6 => CreateGulyayGorod(i + 1, tag),
+                _ => CreateRandomUnit(i + 1, tag)
             };
 
             Console.Write($"  Использовать стандартные характеристики? ({unit}) [y/n]: ");
             string? answer = Console.ReadLine()?.Trim().ToLower();
 
             if (answer == "n")
-                unit = CustomizeUnit(unit, i + 1);
+                unit = CustomizeUnit(unit, i + 1, tag);
+
+            // Паттерн Proxy: предложить обернуть юнита в щит
+            Console.Write("  Добавить щит? [y/n]: ");
+            string? shieldAnswer = Console.ReadLine()?.Trim().ToLower();
+            if (shieldAnswer == "y")
+                unit = new UnitProxy(unit, Vary(UnitProxy.BaseShield, 10));
 
             army.Units.Add(unit);
         }
@@ -55,38 +79,48 @@ public static class ArmyFactory
         return army;
     }
 
-    private static Unit CreateRandomUnit(int number)
+    // Случайный выбор типа юнита (6 типов)
+    private static Unit CreateRandomUnit(int number, string tag)
     {
-        return Rng.Next(3) switch
+        return Rng.Next(6) switch
         {
-            0 => CreateHeavyInfantry(number),
-            1 => CreateLightInfantry(number),
-            _ => CreateArcher(number)
+            0 => CreateHeavyInfantry(number, tag),
+            1 => CreateLightInfantry(number, tag),
+            2 => CreateArcher(number, tag),
+            3 => CreateHealer(number, tag),
+            4 => CreateWizard(number, tag),
+            _ => CreateGulyayGorod(number, tag)
         };
     }
 
-    private static HeavyInfantry CreateHeavyInfantry(int number)
+    // Формат имени: "A1:Heavy#1" — тег армии + тип + порядковый номер
+    private static string MakeName(string type, int number, string tag)
+    {
+        return string.IsNullOrEmpty(tag) ? $"{type}#{number}" : $"{tag}:{type}#{number}";
+    }
+
+    private static HeavyInfantry CreateHeavyInfantry(int number, string tag)
     {
         return new HeavyInfantry(
-            name: $"Heavy#{number}",
+            name: MakeName("Тяжёлый", number, tag),
             damage: Vary(HeavyInfantry.BaseDamage, 4),
             defense: Vary(HeavyInfantry.BaseDefense, 3),
             health: Vary(HeavyInfantry.BaseHealth, 20));
     }
 
-    private static LightInfantry CreateLightInfantry(int number)
+    private static LightInfantry CreateLightInfantry(int number, string tag)
     {
         return new LightInfantry(
-            name: $"Light#{number}",
+            name: MakeName("Лёгкий", number, tag),
             damage: Vary(LightInfantry.BaseDamage, 5),
             defense: Vary(LightInfantry.BaseDefense, 2),
             health: Vary(LightInfantry.BaseHealth, 15));
     }
 
-    private static Archer CreateArcher(int number)
+    private static Archer CreateArcher(int number, string tag)
     {
         return new Archer(
-            name: $"Archer#{number}",
+            name: MakeName("Лучник", number, tag),
             damage: Vary(Archer.BaseDamage, 2),
             defense: Vary(Archer.BaseDefense, 1),
             health: Vary(Archer.BaseHealth, 10),
@@ -94,7 +128,38 @@ public static class ArmyFactory
             power: Vary(Archer.BasePower, 5));
     }
 
-    private static Unit CustomizeUnit(Unit template, int number)
+    private static Healer CreateHealer(int number, string tag)
+    {
+        return new Healer(
+            name: MakeName("Хилер", number, tag),
+            damage: Vary(Healer.BaseDamage, 2),
+            defense: Vary(Healer.BaseDefense, 1),
+            health: Vary(Healer.BaseHealth, 10),
+            range: Vary(Healer.BaseRange, 1),
+            power: Vary(Healer.BasePower, 5));
+    }
+
+    private static Wizard CreateWizard(int number, string tag)
+    {
+        return new Wizard(
+            name: MakeName("Маг", number, tag),
+            damage: Vary(Wizard.BaseDamage, 2),
+            defense: Vary(Wizard.BaseDefense, 1),
+            health: Vary(Wizard.BaseHealth, 10),
+            range: Vary(Wizard.BaseRange, 1),
+            cloneChance: Vary(Wizard.BaseCloneChance, 10));
+    }
+
+    private static GulyayGorodAdapter CreateGulyayGorod(int number, string tag)
+    {
+        return new GulyayGorodAdapter(
+            name: MakeName("ГуляйГород", number, tag),
+            defense: Vary(GulyayGorodAdapter.BaseDefense, 5),
+            health: Vary(GulyayGorodAdapter.BaseHealth, 30));
+    }
+
+    // Ручная настройка характеристик юнита (Enter = оставить по умолчанию)
+    private static Unit CustomizeUnit(Unit template, int number, string tag)
     {
         Console.Write($"    Урон [{template.Damage}]: ");
         int damage = ReadIntOrDefault(template.Damage);
@@ -103,21 +168,47 @@ public static class ArmyFactory
         Console.Write($"    HP [{template.Health}]: ");
         int health = ReadIntOrDefault(template.Health);
 
+        // У лучника — дополнительные параметры дальности и силы стрелы
         if (template is Archer archer)
         {
             Console.Write($"    Дальность [{archer.Range}]: ");
             int range = ReadIntOrDefault(archer.Range);
             Console.Write($"    Сила стрелы [{archer.Power}]: ");
             int power = ReadIntOrDefault(archer.Power);
-            return new Archer($"Archer#{number}", damage, defense, health, range, power);
+            return new Archer(MakeName("Лучник", number, tag), damage, defense, health, range, power);
         }
 
-        if (template is HeavyInfantry)
-            return new HeavyInfantry($"Heavy#{number}", damage, defense, health);
+        // У хилера — дальность и сила лечения
+        if (template is Healer healer)
+        {
+            Console.Write($"    Дальность [{healer.Range}]: ");
+            int range = ReadIntOrDefault(healer.Range);
+            Console.Write($"    Сила лечения [{healer.Power}]: ");
+            int power = ReadIntOrDefault(healer.Power);
+            return new Healer(MakeName("Хилер", number, tag), damage, defense, health, range, power);
+        }
 
-        return new LightInfantry($"Light#{number}", damage, defense, health);
+        // У мага — дальность и шанс клонирования
+        if (template is Wizard wizard)
+        {
+            Console.Write($"    Дальность [{wizard.Range}]: ");
+            int range = ReadIntOrDefault(wizard.Range);
+            Console.Write($"    Шанс клона % [{wizard.CloneChance}]: ");
+            int cloneChance = ReadIntOrDefault(wizard.CloneChance);
+            return new Wizard(MakeName("Маг", number, tag), damage, defense, health, range, cloneChance);
+        }
+
+        // Гуляй-город — только защита и HP (без атаки)
+        if (template is GulyayGorodAdapter)
+            return new GulyayGorodAdapter(MakeName("ГуляйГород", number, tag), defense, health);
+
+        if (template is HeavyInfantry)
+            return new HeavyInfantry(MakeName("Тяжёлый", number, tag), damage, defense, health);
+
+        return new LightInfantry(MakeName("Лёгкий", number, tag), damage, defense, health);
     }
 
+    // Рандомизация: базовое значение ± variance. Пример: Vary(150, 20) → от 130 до 170
     private static int Vary(int baseValue, int variance)
     {
         return baseValue + Rng.Next(-variance, variance + 1);
@@ -133,6 +224,7 @@ public static class ArmyFactory
         }
     }
 
+    // Чтение числа с возможностью оставить значение по умолчанию (пустой Enter)
     private static int ReadIntOrDefault(int defaultValue)
     {
         string? input = Console.ReadLine()?.Trim();
