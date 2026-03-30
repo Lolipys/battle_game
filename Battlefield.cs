@@ -83,9 +83,10 @@ public class Battlefield
             return;
 
         // Атака первого юнита Армии 1
+        int hpBefore = defender.Health;
         int shieldBefore = GetShield(defender);
         int damage = attacker.Attack(defender);
-        Logger.MeleeAttack(attacker, defender, damage);
+        Logger.MeleeAttack(attacker, defender, damage, hpBefore);
         LogShieldChange(defender, shieldBefore);
 
         // Если защитник убит — ответного удара не будет
@@ -96,9 +97,10 @@ public class Battlefield
         }
 
         // Ответный удар защитника (только если выжил)
+        hpBefore = attacker.Health;
         shieldBefore = GetShield(attacker);
         int counterDamage = defender.Attack(attacker);
-        Logger.CounterAttack(defender, attacker, counterDamage);
+        Logger.CounterAttack(defender, attacker, counterDamage, hpBefore);
         LogShieldChange(attacker, shieldBefore);
 
         if (!attacker.IsAlive)
@@ -172,9 +174,10 @@ public class Battlefield
             if (target == null)
                 break;
 
+            int hpBefore = target.Health;
             int shieldBefore = GetShield(target);
             int damage = ability.UseAbility(target);
-            Logger.AbilityUsed(allies.Units[i], target, damage, position, ability.Range);
+            Logger.AbilityUsed(allies.Units[i], target, damage, position, ability.Range, hpBefore);
             LogShieldChange(target, shieldBefore);
 
             if (!target.IsAlive)
@@ -195,6 +198,11 @@ public class Battlefield
             if (!allies.Units[j].IsAlive) continue;
             if (allies.Units[j] is not ICanBeHealed) continue;  // только ICanBeHealed
             if (allies.Units[j].Health >= allies.Units[j].MaxHealth) continue; // уже полное HP
+
+            // Проверка дальности: расстояние между хилером и целью <= Range
+            int distance = Math.Abs(j - healerIndex);
+            if (distance > healer.Range) continue;
+
             candidates.Add(allies.Units[j]);
         }
 

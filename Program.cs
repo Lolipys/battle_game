@@ -7,8 +7,9 @@ using BattleGame.Services;
 string savesDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "saves"));
 Directory.CreateDirectory(savesDir);
 
-// Dependency Injection: создаём логгер и передаём в Battlefield
-IBattleLogger logger = new BattleLog();
+// Dependency Injection: создаём логгер и оборачиваем в звуковой прокси
+// BattleLog → SoundLoggerProxy → Battlefield (два паттерна: DI + Proxy)
+IBattleLogger logger = new SoundLoggerProxy(new BattleLog());
 Battlefield? battlefield = null;
 
 // --- Главное меню ---
@@ -53,10 +54,12 @@ while (true)
 
 // --- Локальные функции ---
 
-// Создание армии: каждый игрок сам выбирает способ (случайно или вручную)
-Army CreateArmy(string name, string tag)
+// Создание армии: каждый игрок выбирает способ (случайно или вручную)
+Army CreateArmy(string name, string tag, int budget)
 {
-    Console.WriteLine($"\n--- {name} ---");
+    var factory = ArmyFactory.Instance;
+
+    Console.WriteLine($"\n--- {name} (бюджет: {budget}) ---");
     Console.WriteLine("1. Случайная армия");
     Console.WriteLine("2. Создать вручную");
     Console.Write("> ");
@@ -64,21 +67,22 @@ Army CreateArmy(string name, string tag)
     string? mode = Console.ReadLine()?.Trim();
 
     if (mode == "2")
-        return ArmyFactory.CreateManual(name, tag);
+        return factory.CreateManualByBudget(name, budget, tag);
 
-    // По умолчанию — случайная
-    Console.Write("Количество юнитов: ");
-    int size = ReadPositiveInt();
-    return ArmyFactory.CreateRandom(name, size, tag);
+    // По умолчанию — случайная в рамках бюджета
+    return factory.CreateByBudget(name, budget, tag);
 }
 
-// Новая игра: каждый игрок выбирает способ создания армии
+// Новая игра: задаётся общий бюджет, затем каждый игрок собирает армию
 Battlefield CreateGame()
 {
+    Console.Write("\nБюджет на каждую армию (например, 500): ");
+    int budget = ReadPositiveInt();
+
     var bf = new Battlefield(logger)
     {
-        Army1 = CreateArmy("Армия 1", "A1"),
-        Army2 = CreateArmy("Армия 2", "A2")
+        Army1 = CreateArmy("Армия 1", "A1", budget),
+        Army2 = CreateArmy("Армия 2", "A2", budget)
     };
 
     Console.WriteLine("\nАрмии созданы:");
@@ -102,9 +106,10 @@ Battlefield? LoadGame()
     {
         Console.WriteLine($"  {i + 1}. {Path.GetFileNameWithoutExtension(files[i])}");
     }
-    Console.Write("Номер или имя файла: ");
+    Console.WriteLine("  0. Назад в главное меню");
+    Console.Write("\nНомер или имя файла: ");
     string? input = Console.ReadLine()?.Trim();
-    if (string.IsNullOrEmpty(input)) return null;
+    if (string.IsNullOrEmpty(input) || input == "0") return null;
 
     // Если ввели число — выбор по номеру
     string filePath;

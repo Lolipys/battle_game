@@ -19,7 +19,7 @@ public class Army
     public Unit? FirstAliveUnit => Units.FirstOrDefault(u => u.IsAlive);
 
     // Суммарная стоимость армии для сравнения баланса
-    public decimal TotalPrice => Units.Sum(u => u.Price);
+    public int TotalPrice => Units.Sum(u => u.Price);
 
     // Удаляет мёртвых юнитов из строя — вызывается в фазе очистки.
     // Оставшиеся юниты сдвигаются вперёд.

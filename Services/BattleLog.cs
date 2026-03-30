@@ -22,35 +22,35 @@ public class BattleLog : IBattleLogger
     }
 
     // Cyan — атака, видно кто кого бьёт
-    public void MeleeAttack(Unit attacker, Unit defender, int damage)
+    public void MeleeAttack(Unit attacker, Unit defender, int damage, int hpBefore)
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine($"  {attacker.Name} -> атакует -> {defender.Name}");
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"    Урон: {attacker.Damage} - {defender.Defense} (защита) = {damage}");
-        Console.WriteLine($"    {defender.Name}: {defender.Health + damage} -> {defender.Health} HP");
+        Console.WriteLine($"    {defender.Name}: {hpBefore} -> {defender.Health} HP");
         Console.ResetColor();
     }
 
     // Magenta — ответный удар, визуально отличается от основной атаки
-    public void CounterAttack(Unit defender, Unit attacker, int damage)
+    public void CounterAttack(Unit defender, Unit attacker, int damage, int hpBefore)
     {
         Console.ForegroundColor = ConsoleColor.Magenta;
         Console.WriteLine($"  {defender.Name} -> ответный удар -> {attacker.Name}");
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"    Урон: {defender.Damage} - {attacker.Defense} (защита) = {damage}");
-        Console.WriteLine($"    {attacker.Name}: {attacker.Health + damage} -> {attacker.Health} HP");
+        Console.WriteLine($"    {attacker.Name}: {hpBefore} -> {attacker.Health} HP");
         Console.ResetColor();
     }
 
     // Green — спецспособность, показывает позицию и дальность стрелка
-    public void AbilityUsed(Unit user, Unit target, int damage, int position, int range)
+    public void AbilityUsed(Unit user, Unit target, int damage, int position, int range, int hpBefore)
     {
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine($"  {user.Name} (поз. {position}, дальность {range}) -> стреляет в {target.Name}");
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"    Урон стрелой: {damage}");
-        Console.WriteLine($"    {target.Name}: {target.Health + damage} -> {target.Health} HP");
+        Console.WriteLine($"    {target.Name}: {hpBefore} -> {target.Health} HP");
         Console.ResetColor();
     }
 
@@ -152,7 +152,7 @@ public class BattleLog : IBattleLogger
 
     private static void PrintArmy(Army army)
     {
-        Console.WriteLine($"  {army.Name} ({army.Units.Count} юнитов, цена: {army.Units.Sum(u => u.Price):F0}):");
+        Console.WriteLine($"  {army.Name} ({army.Units.Count} юнитов, цена: {army.Units.Sum(u => u.Price)}):");
         for (int i = 0; i < army.Units.Count; i++)
         {
             Console.WriteLine($"    {i + 1}. {army.Units[i]}");

@@ -21,7 +21,7 @@ public abstract class Unit
 
     // Вычисляемые свойства — не сохраняются в JSON, т.к. зависят от других полей
     [JsonIgnore]
-    public decimal Price => Damage * 2m + Defense * 1.5m + MaxHealth;
+    public int Price => Damage * 2 + (int)Math.Ceiling(Defense * 1.5) + MaxHealth;
 
     [JsonIgnore]
     public bool IsAlive => Health > 0;
