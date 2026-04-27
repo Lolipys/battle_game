@@ -40,19 +40,7 @@ public class Archer : Unit, ISpecialAbility, ICanBeHealed, ICanBeCloned
     public int UseAbility(Unit target)
     {
         int arrowDamage = Math.Max(Power - target.Defense / 2, 1);
-
-        // Паттерн Proxy: щит перехватывает часть урона стрелы
-        if (target is UnitProxy proxy && proxy.Shield > 0)
-        {
-            int absorbed = proxy.AbsorbDamage(arrowDamage);
-            int remaining = arrowDamage - absorbed;
-            target.Health = Math.Max(target.Health - remaining, 0);
-        }
-        else
-        {
-            target.Health = Math.Max(target.Health - arrowDamage, 0);
-        }
-
+        target.TakeDamage(arrowDamage);
         return arrowDamage;
     }
 

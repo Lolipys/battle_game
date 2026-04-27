@@ -10,14 +10,19 @@ namespace BattleGame.Units;
 [JsonDerivedType(typeof(Healer), "healer")]
 [JsonDerivedType(typeof(Wizard), "wizard")]
 [JsonDerivedType(typeof(GulyayGorodAdapter), "gulyay")]
-[JsonDerivedType(typeof(UnitProxy), "proxy")]
+[JsonDerivedType(typeof(HorseBuff), "horse")]
+[JsonDerivedType(typeof(SpearBuff), "spear")]
+[JsonDerivedType(typeof(ShieldBuff), "shield")]
+[JsonDerivedType(typeof(HelmetBuff), "helmet")]
 public abstract class Unit
 {
     public string Name { get; set; } = string.Empty;
-    public int Damage { get; set; }
-    public int Defense { get; set; }
-    public int Health { get; set; }
-    public int MaxHealth { get; set; }
+
+    // virtual — декораторы (баффы) могут переопределить, чтобы делегировать во внутренний юнит
+    public virtual int Damage { get; set; }
+    public virtual int Defense { get; set; }
+    public virtual int Health { get; set; }
+    public virtual int MaxHealth { get; set; }
 
     // Вычисляемые свойства — не сохраняются в JSON, т.к. зависят от других полей
     [JsonIgnore]
@@ -26,26 +31,19 @@ public abstract class Unit
     [JsonIgnore]
     public bool IsAlive => Health > 0;
 
-    // Атака цели. Урон = своя атака - защита цели (минимум 1, чтобы бой не зацикливался).
-    // Если у цели есть щит (UnitProxy) — сначала урон поглощается щитом.
+    // Атака цели. Урон = своя атака - защита цели (минимум 1).
     // HP цели не опускается ниже 0.
-    public int Attack(Unit target)
+    public virtual int Attack(Unit target)
     {
         int actualDamage = Math.Max(Damage - target.Defense, 1);
-
-        // Паттерн Proxy: щит перехватывает часть урона
-        if (target is UnitProxy proxy && proxy.Shield > 0)
-        {
-            int absorbed = proxy.AbsorbDamage(actualDamage);
-            int remaining = actualDamage - absorbed;
-            target.Health = Math.Max(target.Health - remaining, 0);
-        }
-        else
-        {
-            target.Health = Math.Max(target.Health - actualDamage, 0);
-        }
-
+        target.TakeDamage(actualDamage);
         return actualDamage;
+    }
+
+    // Получение урона. virtual — декораторы могут перехватить.
+    public virtual void TakeDamage(int damage)
+    {
+        Health = Math.Max(Health - damage, 0);
     }
 
     public override string ToString()

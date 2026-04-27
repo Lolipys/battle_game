@@ -29,17 +29,16 @@ public class GulyayGorodAdapter : Unit
     }
 
     // Переопределяем атаку: Гуляй-город не атакует, всегда 0 урона
-    public new int Attack(Unit target)
+    public override int Attack(Unit target)
     {
         return 0;
     }
 
-    // Синхронизация: при получении урона обновляем и внутренний объект
-    public void TakeDamage(int damage)
+    // Синхронизация: при получении урона обновляем и внутренний объект из DLL
+    public override void TakeDamage(int damage)
     {
-        int actualDamage = Math.Max(damage - Defense, 1);
-        Health = Math.Max(Health - actualDamage, 0);
-        _inner.ReduceHealth(actualDamage);
+        Health = Math.Max(Health - damage, 0);
+        _inner.ReduceHealth(damage);
     }
 
     public override string ToString()

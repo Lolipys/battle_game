@@ -25,21 +25,12 @@ public class ArmyFactory
         var army = new Army { Name = name };
 
         for (int i = 0; i < unitCount; i++)
-        {
-            Unit unit = _unitFactory.CreateRandom(i + 1, tag);
-
-            // 20% шанс получить щит (паттерн Proxy)
-            if (_rng.Next(5) == 0)
-                unit = new UnitProxy(unit, Vary(UnitProxy.BaseShield, 10));
-
-            army.Units.Add(unit);
-        }
+            army.Units.Add(_unitFactory.CreateRandom(i + 1, tag));
 
         return army;
     }
 
     // Фабричный метод: создание армии по бюджету (стоимости).
-    // Добавляет случайных юнитов, пока хватает денег.
     public Army CreateByBudget(string name, int budget, string tag = "")
     {
         var army = new Army { Name = name };
@@ -49,7 +40,6 @@ public class ArmyFactory
         {
             Unit unit = _unitFactory.CreateRandom(number, tag);
 
-            // Если юнит слишком дорогой — пробуем другой (до 10 попыток)
             int attempts = 0;
             while (unit.Price > budget && attempts < 10)
             {
@@ -57,12 +47,7 @@ public class ArmyFactory
                 attempts++;
             }
 
-            if (unit.Price > budget)
-                break;
-
-            // 20% шанс получить щит
-            if (_rng.Next(5) == 0)
-                unit = new UnitProxy(unit, Vary(UnitProxy.BaseShield, 10));
+            if (unit.Price > budget) break;
 
             army.Units.Add(unit);
             budget -= unit.Price;
@@ -72,57 +57,7 @@ public class ArmyFactory
         return army;
     }
 
-    // Создание армии вручную: пользователь выбирает тип каждого юнита
-    public Army CreateManual(string name, string tag = "")
-    {
-        var army = new Army { Name = name };
-
-        Console.WriteLine($"\nСоздание армии \"{name}\"");
-        Console.Write("Количество юнитов: ");
-        int count = ReadInt(1, 20);
-
-        for (int i = 0; i < count; i++)
-        {
-            Console.WriteLine($"\n  Юнит {i + 1}:");
-            Console.WriteLine("  1. Тяжёлый пехотинец");
-            Console.WriteLine("  2. Лёгкий пехотинец");
-            Console.WriteLine("  3. Лучник");
-            Console.WriteLine("  4. Хилер");
-            Console.WriteLine("  5. Маг");
-            Console.WriteLine("  6. Гуляй-город");
-            Console.Write("  Тип: ");
-            int type = ReadInt(1, 6);
-
-            Unit unit = type switch
-            {
-                1 => _unitFactory.CreateHeavyInfantry(i + 1, tag),
-                2 => _unitFactory.CreateLightInfantry(i + 1, tag),
-                3 => _unitFactory.CreateArcher(i + 1, tag),
-                4 => _unitFactory.CreateHealer(i + 1, tag),
-                5 => _unitFactory.CreateWizard(i + 1, tag),
-                6 => _unitFactory.CreateGulyayGorod(i + 1, tag),
-                _ => _unitFactory.CreateRandom(i + 1, tag)
-            };
-
-            Console.Write($"  Использовать стандартные характеристики? ({unit}) [y/n]: ");
-            string? answer = Console.ReadLine()?.Trim().ToLower();
-
-            if (answer == "n")
-                unit = CustomizeUnit(unit, i + 1, tag);
-
-            // Паттерн Proxy: предложить обернуть юнита в щит
-            Console.Write("  Добавить щит? [y/n]: ");
-            string? shieldAnswer = Console.ReadLine()?.Trim().ToLower();
-            if (shieldAnswer == "y")
-                unit = new UnitProxy(unit, Vary(UnitProxy.BaseShield, 10));
-
-            army.Units.Add(unit);
-        }
-
-        return army;
-    }
-
-    // Создание армии вручную с бюджетом: игрок видит цены и покупает юнитов
+    // Создание армии вручную с бюджетом
     public Army CreateManualByBudget(string name, int budget, string tag = "")
     {
         var army = new Army { Name = name };
@@ -147,8 +82,7 @@ public class ArmyFactory
             Console.Write("  > ");
             int type = ReadInt(0, 6);
 
-            if (type == 0)
-                break;
+            if (type == 0) break;
 
             Unit unit = type switch
             {
@@ -161,14 +95,12 @@ public class ArmyFactory
                 _ => _unitFactory.CreateRandom(number, tag)
             };
 
-            // Показываем юнита и предлагаем настроить характеристики
             Console.WriteLine($"  Создан: {unit} (цена: {unit.Price})");
             Console.Write("  Настроить характеристики? [y/n]: ");
             string? customAnswer = Console.ReadLine()?.Trim().ToLower();
             if (customAnswer == "y")
                 unit = CustomizeUnit(unit, number, tag);
 
-            // Проверяем, хватает ли денег (после возможной настройки цена могла измениться)
             if (unit.Price > budget)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -176,12 +108,6 @@ public class ArmyFactory
                 Console.ResetColor();
                 continue;
             }
-
-            // Паттерн Proxy: предложить щит
-            Console.Write("  Добавить щит? [y/n]: ");
-            string? shieldAnswer = Console.ReadLine()?.Trim().ToLower();
-            if (shieldAnswer == "y")
-                unit = new UnitProxy(unit, Vary(UnitProxy.BaseShield, 10));
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"  Куплен: {unit} (цена: {unit.Price})");
@@ -193,30 +119,25 @@ public class ArmyFactory
         }
 
         if (army.Units.Count == 0)
+        {
             Console.WriteLine("  Армия пуста! Добавлен один случайный юнит.");
-
-        // Гарантия: хотя бы 1 юнит
-        if (army.Units.Count == 0)
             army.Units.Add(_unitFactory.CreateRandom(1, tag));
+        }
 
         Console.WriteLine($"  Итого: {army.Units.Count} юнитов, потрачено: {army.TotalPrice}");
         return army;
     }
 
-    // Формула цены для отображения в меню (та же что в Unit.Price)
     private static int CalcPrice(int damage, int defense, int health)
     {
         return damage * 2 + (int)Math.Ceiling(defense * 1.5) + health;
     }
 
-    // Ручная настройка характеристик юнита (Enter = оставить по умолчанию)
-    // Каждый тип юнита показывает только свои настраиваемые параметры.
     private Unit CustomizeUnit(Unit template, int number, string tag)
     {
         string MakeName(string type) =>
             string.IsNullOrEmpty(tag) ? $"{type}#{number}" : $"{tag}:{type}#{number}";
 
-        // Гуляй-город: только защита и HP (нет атаки)
         if (template is GulyayGorodAdapter)
         {
             Console.Write($"    Защита [{template.Defense}]: ");
@@ -226,7 +147,6 @@ public class ArmyFactory
             return new GulyayGorodAdapter(MakeName("ГуляйГород"), def, hp);
         }
 
-        // Общие параметры для остальных юнитов
         Console.Write($"    Урон [{template.Damage}]: ");
         int damage = ReadIntOrDefault(template.Damage);
         Console.Write($"    Защита [{template.Defense}]: ");
@@ -267,11 +187,6 @@ public class ArmyFactory
         return new LightInfantry(MakeName("Лёгкий"), damage, defense, health);
     }
 
-    private int Vary(int baseValue, int variance)
-    {
-        return baseValue + _rng.Next(-variance, variance + 1);
-    }
-
     private static int ReadInt(int min, int max)
     {
         while (true)
@@ -285,8 +200,7 @@ public class ArmyFactory
     private static int ReadIntOrDefault(int defaultValue)
     {
         string? input = Console.ReadLine()?.Trim();
-        if (string.IsNullOrEmpty(input))
-            return defaultValue;
+        if (string.IsNullOrEmpty(input)) return defaultValue;
         return int.TryParse(input, out int value) ? value : defaultValue;
     }
 }

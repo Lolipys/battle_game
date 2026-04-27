@@ -21,6 +21,13 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
+    public void Info(string message)
+    {
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine($"  {message}");
+        Console.ResetColor();
+    }
+
     // Cyan — атака, видно кто кого бьёт
     public void MeleeAttack(Unit attacker, Unit defender, int damage, int hpBefore)
     {
@@ -62,7 +69,8 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // Red — гибель юнита, сразу бросается в глаза
+    // Red — гибель юнита, сразу бросается в глаза.
+    // Вызывается из DeathObserver, не напрямую из Battlefield.
     public void UnitDied(Unit unit, string armyName)
     {
         Console.ForegroundColor = ConsoleColor.Red;
@@ -98,6 +106,14 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
+    public void Draw(string reason)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("\n  ========== НИЧЬЯ ==========");
+        Console.WriteLine($"  {reason}");
+        Console.ResetColor();
+    }
+
     // Blue — лечение союзника
     public void HealUsed(Unit healer, Unit target, int healAmount, int position, int range)
     {
@@ -126,18 +142,26 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // DarkYellow — щит поглотил урон
-    public void ShieldAbsorbed(Unit target, int absorbed, int shieldRemaining)
+    // Green — оруженосец надел бафф на тяжёлого
+    public void BuffApplied(Unit squire, Unit target, string buffName)
     {
-        Console.ForegroundColor = ConsoleColor.DarkYellow;
-        Console.WriteLine($"    Щит поглотил: {absorbed} урона (осталось щита: {shieldRemaining})");
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"  {squire.Name} -> надел [{buffName}] на {target.Name}");
         Console.ResetColor();
     }
 
-    public void ShieldDestroyed(Unit target)
+    // DarkGray — бафф был сбит ударом
+    public void BuffStripped(Unit target, string buffName)
     {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine($"    *** Щит {target.Name} разрушен! ***");
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine($"    Сбит бафф [{buffName}] с {target.Name}");
+        Console.ResetColor();
+    }
+
+    public void StrategyChanged(string strategyName)
+    {
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine($"\n  >> Построение изменено: {strategyName}");
         Console.ResetColor();
     }
 
