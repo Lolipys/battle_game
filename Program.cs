@@ -147,9 +147,9 @@ void RunGameLoop(Battlefield bf, CommandManager cmds)
         Console.WriteLine("3. Показать армии");
         Console.WriteLine("4. Сохранить игру");
         Console.WriteLine("5. Перепостроение (сменить стратегию)");
-        Console.WriteLine($"6. Отменить (Undo)  [история: {cmds.HistoryDepth}]");
-        Console.WriteLine("7. Повторить (Redo)");
-        Console.WriteLine("8. Сбросить к началу (Reset)");
+        Console.WriteLine($"6. Отменить ход  [история: {cmds.HistoryDepth}]");
+        Console.WriteLine("7. Повторить ход");
+        Console.WriteLine("8. Сбросить к началу");
         Console.WriteLine("0. Вернуться в главное меню");
         Console.Write("\n> ");
 
