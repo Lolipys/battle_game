@@ -9,6 +9,21 @@ using BattleGame.Services.Strategies;
 string savesDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "saves"));
 Directory.CreateDirectory(savesDir);
 
+// --- Выбор режима ---
+Console.ForegroundColor = ConsoleColor.White;
+Console.WriteLine("\n=== АРЕНА — БИТВА АРМИЙ ===");
+Console.ResetColor();
+Console.WriteLine("1. Продолжить в терминале");
+Console.WriteLine("2. Открыть графический интерфейс");
+Console.Write("\n> ");
+if (Console.ReadLine()?.Trim() == "2")
+{
+    Application.EnableVisualStyles();
+    Application.SetCompatibleTextRenderingDefault(false);
+    Application.Run(new BattleGame.GUI.MainForm(savesDir));
+    return;
+}
+
 // Логгер — теперь без SoundLoggerProxy. Звук был выкинут вместе с проксями (демо 3).
 IBattleLogger logger = new BattleLog();
 Battlefield? battlefield = null;
