@@ -2,8 +2,8 @@ using BattleGame.Interfaces;
 
 namespace BattleGame.Services.Strategies;
 
-// Резолвер стратегий по имени — нужен для восстановления при загрузке/Undo.
-// Имя сериализуется в Battlefield.StrategyName, объект-стратегия пересоздаётся.
+// Резолвер стратегий по имени — нужен для восстановления при загрузке/Undo
+// Имя сериализуется в Battlefield.StrategyName, объект-стратегия пересоздаётся
 public static class StrategyResolver
 {
     public static IBattleStrategy[] All() => new IBattleStrategy[]

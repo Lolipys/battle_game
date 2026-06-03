@@ -4,7 +4,6 @@ using BattleGame.Services.Strategies;
 
 namespace BattleGame.Services.Commands;
 
-// Команда "сделать ход": сохраняет состояние, выполняет ход, при Undo откатывает.
 public class MakeTurnCommand : ICommand
 {
     private readonly Battlefield _bf;

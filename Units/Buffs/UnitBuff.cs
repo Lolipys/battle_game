@@ -2,19 +2,17 @@ using System.Text.Json.Serialization;
 
 namespace BattleGame.Units;
 
-// Паттерн Decorator: базовый класс для баффов, оборачивающих другого юнита.
-// Бафф сам является Unit'ом — снаружи неотличим. Inner-юнит сериализуется как ссылка.
-// Все характеристики (Health, MaxHealth, Damage, Defense) делегируются Inner — полиморфно через цепочку.
+// Decorator: бафф сам является Unit'ом - снаружи неотличим
+// Характеристики делегируются по цепочке Inner-юнитов
 public abstract class UnitBuff : Unit
 {
-    // Внутренний юнит (или другой бафф ниже по цепочке). Public для JSON-сериализации.
+    // public — нужен для JSON-сериализации (System.Text.Json требует public)
     public Unit Inner { get; set; } = null!;
 
-    // Имя баффа для отображения и проверки "не вешать дважды"
+    // имя используется для проверки "не вешать дважды" и для логирования
     [JsonIgnore]
     public abstract string BuffName { get; }
 
-    // Бонус, который этот бафф добавляет (переопределяется наследниками)
     [JsonIgnore]
     public virtual int BonusDamage => 0;
 
@@ -29,8 +27,7 @@ public abstract class UnitBuff : Unit
         Name = inner.Name;
     }
 
-    // Делегируем всё во внутренний юнит — цепочка декораторов всегда видит актуальные значения.
-    // Сеттеры на Health/MaxHealth используются Healer.UseAbility, поэтому тоже делегируем.
+    // все свойства делегируются Inner; сеттеры нужны для Healer.UseAbility (target.Health += healAmount)
     public override int Health
     {
         get => Inner?.Health ?? 0;
@@ -55,16 +52,13 @@ public abstract class UnitBuff : Unit
         set { if (Inner != null) Inner.Defense = value - BonusDefense; }
     }
 
-    // Урон проходит во внутренний юнит (полиморфно — следующий бафф или сам Unit)
     public override void TakeDamage(int damage)
     {
         Inner.TakeDamage(damage);
     }
 
-    // Снять этот бафф — вернуть Inner. Используется при "сбитии" баффа в бою.
     public Unit Strip() => Inner;
 
-    // Проверка: висит ли уже бафф с таким именем где-то в цепочке
     public static bool HasBuff(Unit unit, string buffName)
     {
         Unit? current = unit;
@@ -76,7 +70,6 @@ public abstract class UnitBuff : Unit
         return false;
     }
 
-    // Развернуть всю цепочку и достать самого "глубокого" носителя
     public static Unit Unwrap(Unit unit)
     {
         while (unit is UnitBuff buff)
@@ -84,19 +77,17 @@ public abstract class UnitBuff : Unit
         return unit;
     }
 
-    // Снять верхний бафф указанного типа из цепочки. Возвращает (возможно изменённого) юнита.
     public static Unit StripBuff(Unit unit, string buffName, out bool stripped)
     {
         stripped = false;
 
-        // Бафф на самом верху — просто снимаем
         if (unit is UnitBuff topBuff && topBuff.BuffName == buffName)
         {
             stripped = true;
             return topBuff.Inner;
         }
 
-        // Иначе ищем глубже и пересобираем цепочку
+        // нашли нужный бафф в глубине — пересобираем цепочку поверх него
         var stack = new Stack<UnitBuff>();
         Unit cursor = unit;
         while (cursor is UnitBuff b)
@@ -123,7 +114,6 @@ public abstract class UnitBuff : Unit
 
     public override string ToString()
     {
-        // Собираем все баффы из цепочки в один список
         var buffs = new List<string>();
         Unit cursor = this;
         while (cursor is UnitBuff b)

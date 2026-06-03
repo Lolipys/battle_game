@@ -3,7 +3,6 @@ using BattleGame.Services.Strategies;
 
 namespace BattleGame.Services.Commands;
 
-// Команда "сменить построение".
 public class ChangeStrategyCommand : ICommand
 {
     private readonly Battlefield _bf;

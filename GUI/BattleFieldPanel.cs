@@ -6,38 +6,36 @@ using BattleGame.Units;
 
 namespace BattleGame.GUI;
 
-/// <summary>
 /// Кастомная панель: рисует поле боя двух армий с анимациями атак, урона и гибели.
 /// Обновляется таймером ~25 fps.
-/// </summary>
 public sealed class BattleFieldPanel : Panel
 {
-    // ── Layout ───────────────────────────────────────────────────────────────
+    // Размеры карточек 
     private const int CardW   = 132;
     private const int CardH   = 106;
     private const int CardGap = 6;
     private const int ArmyPad = 12;
 
-    // ── State ────────────────────────────────────────────────────────────────
+    // Состояние
     private Army?   _army1;
     private Army?   _army2;
     private string? _stratName;
-    private Army?   _winner;       // null = no game over; reference = winner; _draw = true = draw
+    private Army?   _winner;       // null = игра не окончена; ссылка = победитель; _isDraw = true = ничья
     private bool    _gameOver;
     private bool    _isDraw;
 
-    // ── Animations ──────────────────────────────────────────────────────────
+    //  Анимации 
     private readonly Dictionary<string, UnitAnim> _anims = new();
-    private readonly System.Windows.Forms.Timer _ticker = new() { Interval = 100 }; // 10 fps — keeps UI responsive
+    private readonly System.Windows.Forms.Timer _ticker = new() { Interval = 100 }; // 10 fps — не перегружает UI
 
     private class UnitAnim
     {
-        public float Damage;   // 1→0 red flash
-        public float Heal;     // 1→0 green flash
-        public bool  Dead;     // permanently dead (show ✖)
+        public float Damage;   // 1→0: красная вспышка
+        public float Heal;     // 1→0: зелёная вспышка
+        public bool  Dead;     // юнит мёртв (показываем ✖)
     }
 
-    // ── Palette ─────────────────────────────────────────────────────────────
+    // Палитра
     static readonly Color BgMain   = Color.FromArgb(15, 15, 22);
     static readonly Color A1C      = Color.FromArgb(60, 130, 200);
     static readonly Color A2C      = Color.FromArgb(210, 70, 70);
@@ -45,7 +43,7 @@ public sealed class BattleFieldPanel : Panel
     static readonly Color FgC      = Color.FromArgb(210, 210, 215);
     static readonly Color FgDimC   = Color.FromArgb(130, 130, 140);
 
-    // Unit-type colors
+    // Цвета по типу юнита
     static readonly Dictionary<string, Color> TypeColors = new()
     {
         ["ТЖ"] = Color.FromArgb(60,  110, 180),
@@ -56,7 +54,7 @@ public sealed class BattleFieldPanel : Panel
         ["ГГ"] = Color.FromArgb(145, 80,  35),
     };
 
-    // Unit-type icons (Segoe UI Symbol or Segoe UI on Win10/11)
+    // Иконки по типу юнита 
     static readonly Dictionary<string, string> TypeIcons = new()
     {
         ["ТЖ"] = "⚔",
@@ -67,7 +65,6 @@ public sealed class BattleFieldPanel : Panel
         ["ГГ"] = "⊕",
     };
 
-    // ────────────────────────────────────────────────────────────────────────
     public BattleFieldPanel()
     {
         SetStyle(ControlStyles.AllPaintingInWmPaint |
@@ -88,7 +85,7 @@ public sealed class BattleFieldPanel : Panel
         _ticker.Start();
     }
 
-    // ── Public API ───────────────────────────────────────────────────────────
+    //  Публичный API 
 
     public void SetBattlefield(Army? a1, Army? a2, string? stratName = null)
     {
@@ -138,7 +135,7 @@ public sealed class BattleFieldPanel : Panel
         Invalidate();
     }
 
-    // ── Painting ─────────────────────────────────────────────────────────────
+    // Отрисовка 
 
     protected override void OnPaint(PaintEventArgs e)
     {
@@ -153,7 +150,7 @@ public sealed class BattleFieldPanel : Panel
 
         int mid = Width / 2;
 
-        // Subtle zone tints
+        // Лёгкая подсветка зон армий
         using (var b = new SolidBrush(Color.FromArgb(14, A1C)))
             g.FillRectangle(b, 0, 0, mid - 2, Height);
         using (var b = new SolidBrush(Color.FromArgb(14, A2C)))
@@ -169,7 +166,7 @@ public sealed class BattleFieldPanel : Panel
 
     private void DrawGameOverBanner(Graphics g)
     {
-        // Dark overlay
+        // Тёмное наложение
         using (var ov = new SolidBrush(Color.FromArgb(160, 10, 10, 18)))
             g.FillRectangle(ov, 0, Height / 2 - 54, Width, 108);
 
@@ -204,17 +201,17 @@ public sealed class BattleFieldPanel : Panel
 
     private void DrawArmy(Graphics g, Rectangle zone, Army army, Color accent)
     {
-        // Header
+        // Заголовок армии
         using var hFont = new Font("Segoe UI", 10.5f, FontStyle.Bold);
         using var hBrush = new SolidBrush(accent);
         string hdr = $"  {army.Name}  ·  {army.Units.Count} юн.";
         g.DrawString(hdr, hFont, hBrush, zone.X + 4, zone.Y + 4);
 
-        // Underline
+        // Подчёркивание
         using var hPen = new Pen(Color.FromArgb(60, accent), 1);
         g.DrawLine(hPen, zone.X + 4, zone.Y + 24, zone.Right - 4, zone.Y + 24);
 
-        // Cards grid
+        // Сетка карточек
         int cols = Math.Max(1, (zone.Width - ArmyPad * 2) / (CardW + CardGap));
         for (int i = 0; i < army.Units.Count; i++)
         {
@@ -230,11 +227,11 @@ public sealed class BattleFieldPanel : Panel
         var anim = GetAnim(unit.Name);
         string abbr = GetAbbr(unit);
 
-        // ── Shadow ─────────────────────────────────────────────────────
+        // Тень 
         using (var sb = new SolidBrush(Color.FromArgb(55, 0, 0, 0)))
             g.FillRectangle(sb, x + 3, y + 3, CardW, CardH);
 
-        // ── Card background ─────────────────────────────────────────────
+        // Фон карточки 
         Color bg = Color.FromArgb(34, 34, 44);
         if (anim.Dead)
             bg = Color.FromArgb(22, 22, 28);
@@ -246,7 +243,7 @@ public sealed class BattleFieldPanel : Panel
         using (var sb = new SolidBrush(bg))
             g.FillRectangle(sb, x, y, CardW, CardH);
 
-        // ── Front-line glow ─────────────────────────────────────────────
+        //  Подсветка передовой
         if (isFront && !anim.Dead)
         {
             using (var outer = new Pen(Color.FromArgb(50, armyAccent), 7))
@@ -260,25 +257,25 @@ public sealed class BattleFieldPanel : Panel
                 g.DrawRectangle(pen, x, y, CardW, CardH);
         }
 
-        // ── Type header bar ─────────────────────────────────────────────
+        // Заголовок типа юнита 
         Color typeC = TypeColors.GetValueOrDefault(abbr, Color.FromArgb(70, 70, 80));
         if (anim.Dead) typeC = Color.FromArgb(40, 40, 46);
 
         using (var sb = new SolidBrush(typeC))
             g.FillRectangle(sb, x, y, CardW, 25);
 
-        // Icon
+        // Иконка
         string icon = TypeIcons.GetValueOrDefault(abbr, "?");
         using (var iFont = new Font("Segoe UI Symbol", 12f))
         using (var ib    = new SolidBrush(Color.FromArgb(220, 220, 220)))
             g.DrawString(icon, iFont, ib, x + 4, y + 3);
 
-        // Type abbreviation
+        // Аббревиатура типа
         using (var aFont = new Font("Segoe UI", 7.5f, FontStyle.Bold))
         using (var ab    = new SolidBrush(Color.FromArgb(200, 200, 200)))
             g.DrawString(abbr, aFont, ab, x + 28, y + 8);
 
-        // ── Dead overlay ─────────────────────────────────────────────────
+        //  Наложение «мёртв» 
         if (anim.Dead)
         {
             using (var ov = new SolidBrush(Color.FromArgb(160, 10, 10, 15)))
@@ -290,7 +287,7 @@ public sealed class BattleFieldPanel : Panel
                 float ty = y + 25 + (CardH - 25) / 2f - 16;
                 g.DrawString("✖", df, db, tx, ty);
             }
-            // Dim name
+            // Приглушённое имя
             string dname = TruncateName(UnitBuff.Unwrap(unit).Name, 16);
             using var dn = new Font("Segoe UI", 7.5f);
             using var db2 = new SolidBrush(Color.FromArgb(80, 80, 85));
@@ -298,13 +295,13 @@ public sealed class BattleFieldPanel : Panel
             return;
         }
 
-        // ── Unit name ─────────────────────────────────────────────────────
+        // Имя юнита 
         string name = TruncateName(UnitBuff.Unwrap(unit).Name, 15);
         using (var nf = new Font("Segoe UI", 8.5f, FontStyle.Bold))
         using (var nb = new SolidBrush(FgC))
             g.DrawString(name, nf, nb, x + 4, y + 27);
 
-        // ── HP bar ────────────────────────────────────────────────────────
+        // Полоска HP 
         float pct = unit.MaxHealth > 0 ? MathF.Max(0, MathF.Min(1, (float)unit.Health / unit.MaxHealth)) : 0;
         Color hpC = pct > 0.6f ? Color.FromArgb(55, 185, 75)
                   : pct > 0.3f ? Color.FromArgb(225, 175, 25)
@@ -314,17 +311,17 @@ public sealed class BattleFieldPanel : Panel
         using (var hpb = new SolidBrush(hpC))
             g.FillRectangle(hpb, x + 4, y + 44, (int)((CardW - 8) * pct), 8);
 
-        // HP text
+        // Текст HP
         using (var hpf = new Font("Consolas", 7f))
         using (var hpt = new SolidBrush(FgDimC))
             g.DrawString($"HP {unit.Health}/{unit.MaxHealth}", hpf, hpt, x + 4, y + 54);
 
-        // Stats
+        // Характеристики
         using (var sf = new Font("Segoe UI", 7.5f))
         using (var st = new SolidBrush(FgDimC))
             g.DrawString($"ATK {unit.Damage}   DEF {unit.Defense}", sf, st, x + 4, y + 68);
 
-        // Buffs
+        // Баффы
         string buffs = GetBuffsShort(unit);
         if (buffs.Length > 0)
         {
@@ -339,7 +336,7 @@ public sealed class BattleFieldPanel : Panel
         using (var pen = new Pen(Color.FromArgb(80, Gold), 2))
             g.DrawLine(pen, x, 0, x, Height);
 
-        // VS label
+        // Надпись VS
         using (var font = new Font("Impact", 16f, FontStyle.Bold))
         using (var brush = new SolidBrush(Color.FromArgb(110, Gold)))
         {
@@ -347,7 +344,7 @@ public sealed class BattleFieldPanel : Panel
             g.DrawString("VS", font, brush, x - sz.Width / 2, Height / 2f - sz.Height / 2);
         }
 
-        // Strategy name at bottom
+        // Имя стратегии снизу
         if (!string.IsNullOrEmpty(_stratName))
         {
             using var sf  = new Font("Segoe UI", 7.5f);
@@ -365,14 +362,14 @@ public sealed class BattleFieldPanel : Panel
         var sz = g.MeasureString(txt, f);
         g.DrawString(txt, f, b, Width / 2f - sz.Width / 2, Height / 2f - sz.Height / 2);
 
-        // Crossed swords decoration
+        // Декоративные скрещённые мечи
         using var df = new Font("Segoe UI Symbol", 42f);
         using var db = new SolidBrush(Color.FromArgb(35, 35, 45));
         var isz = g.MeasureString("⚔", df);
         g.DrawString("⚔", df, db, Width / 2f - isz.Width / 2, Height / 2f - isz.Height / 2 - 44);
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // Вспомогательные методы 
 
     private UnitAnim GetAnim(string key)
     {

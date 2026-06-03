@@ -2,9 +2,7 @@ using BattleGame.Units;
 
 namespace BattleGame.Interfaces;
 
-// Контракт логирования боевых событий.
-// Принцип D (SOLID): Battlefield зависит от этого интерфейса, а не от конкретного BattleLog.
-// Позволяет подменить вывод (консоль, файл, тесты) без изменения логики боя.
+// Battlefield зависит от этого интерфейса (DI): вывод подменяем без изменения логики боя
 public interface IBattleLogger
 {
     void TurnHeader(int turn);

@@ -3,10 +3,7 @@ using BattleGame.Units;
 
 namespace BattleGame.Services.Observers;
 
-// Наблюдатель урона.
-// Подписан на одно событие — OnDamage. Накапливает суммарный урон в текущем ходе.
-// Используется для правила ничьи: если 10 ходов подряд никто не получает урон — игра в патовой ситуации.
-// Это требование с лекции "upd по гуляй город".
+// правило ничьи: 10 ходов без урона = IsDraw = true
 public class DamageObserver : IBattleObserver
 {
     public const int DrawAfterStaticTurns = 10;
@@ -14,7 +11,6 @@ public class DamageObserver : IBattleObserver
     private int _damageThisTurn;
     private int _staticTurns;
 
-    // True, если игра достигла патового состояния (10 ходов без урона).
     public bool IsDraw => _staticTurns >= DrawAfterStaticTurns;
 
     public int StaticTurns => _staticTurns;
@@ -27,8 +23,6 @@ public class DamageObserver : IBattleObserver
 
     public void OnDeath(Unit unit, Army army) { }
 
-    // В начале нового хода смотрим, был ли урон в прошлом ходу.
-    // Если нет — увеличиваем счётчик статичных ходов; если был — сбрасываем.
     public void OnTurnStarted(int turnNumber)
     {
         if (turnNumber <= 1)
@@ -45,7 +39,7 @@ public class DamageObserver : IBattleObserver
         _damageThisTurn = 0;
     }
 
-    // Сброс счётчиков (используется при Undo, чтобы не накапливалась ничья).
+    // вызывается при Undo, чтобы ничья не накапливалась из откатанных ходов
     public void Reset()
     {
         _damageThisTurn = 0;

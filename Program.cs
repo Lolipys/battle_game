@@ -5,11 +5,9 @@ using BattleGame.Services.Commands;
 using BattleGame.Services.Observers;
 using BattleGame.Services.Strategies;
 
-// --- Настройка ---
 string savesDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "saves"));
 Directory.CreateDirectory(savesDir);
 
-// --- Выбор режима ---
 Console.ForegroundColor = ConsoleColor.White;
 Console.WriteLine("\n=== АРЕНА — БИТВА АРМИЙ ===");
 Console.ResetColor();
@@ -24,12 +22,11 @@ if (Console.ReadLine()?.Trim() == "2")
     return;
 }
 
-// Логгер — теперь без SoundLoggerProxy. Звук был выкинут вместе с проксями (демо 3).
+// SoundLoggerProxy убран: DeathObserver заменил Proxy-обёртку
 IBattleLogger logger = new BattleLog();
 Battlefield? battlefield = null;
 CommandManager? commands = null;
 
-// --- Главное меню ---
 while (true)
 {
     Console.ForegroundColor = ConsoleColor.White;
@@ -72,11 +69,10 @@ while (true)
     }
 }
 
-// --- Создание услуг (Observer + Command) ---
 CommandManager AttachServices(Battlefield bf)
 {
-    bf.Subscribe(new DeathObserver(logger));   // 1-й наблюдатель — смерть юнитов
-    bf.Subscribe(new DamageObserver());        // 2-й наблюдатель — урон + правило ничьи
+    bf.Subscribe(new DeathObserver(logger));   // логирует гибель юнитов
+    bf.Subscribe(new DamageObserver());        // отслеживает урон для правила ничьи
     return new CommandManager();
 }
 
@@ -106,7 +102,6 @@ Battlefield CreateGame()
         Army2 = CreateArmy("Армия 2", "A2", budget)
     };
 
-    // По умолчанию — узкий мост; можно сменить в меню
     bf.SetStrategy(new BridgeStrategy());
 
     Console.WriteLine("\nАрмии созданы:");
@@ -143,7 +138,6 @@ Battlefield? LoadGame()
     return GameSerializer.Load(filePath);
 }
 
-// Игровой цикл: команды (Execute/Undo/Redo/Reset) + смена стратегии в любой момент
 void RunGameLoop(Battlefield bf, CommandManager cmds)
 {
     while (true)

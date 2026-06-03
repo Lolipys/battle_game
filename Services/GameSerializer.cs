@@ -2,25 +2,17 @@ using System.Text.Json;
 
 namespace BattleGame.Services;
 
-// Сериализация/десериализация игры в JSON.
-// static — чистая утилита без состояния.
 public static class GameSerializer
 {
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        WriteIndented = true  // читаемый JSON с отступами
-    };
+    private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
-    // Сохранение состояния игры в файл
     public static void Save(Battlefield battlefield, string filePath)
     {
         try
         {
-            // Защита: если указали папку вместо файла — добавляем имя файла
             if (Directory.Exists(filePath))
                 filePath = Path.Combine(filePath, "battle_save.json");
 
-            // Защита: если забыли расширение — добавляем .json
             if (!Path.HasExtension(filePath))
                 filePath += ".json";
 
@@ -36,7 +28,6 @@ public static class GameSerializer
         }
     }
 
-    // Загрузка состояния игры из файла
     public static Battlefield? Load(string filePath)
     {
         if (!Path.HasExtension(filePath))
@@ -51,7 +42,6 @@ public static class GameSerializer
         try
         {
             string json = File.ReadAllText(filePath);
-            // JsonDerivedType атрибуты в Unit.cs обеспечивают правильную десериализацию наследников
             var battlefield = JsonSerializer.Deserialize<Battlefield>(json, Options);
 
             if (battlefield != null)

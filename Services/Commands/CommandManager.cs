@@ -2,8 +2,7 @@ using BattleGame.Interfaces;
 
 namespace BattleGame.Services.Commands;
 
-// Менеджер истории команд: Undo / Redo / Reset (полный откат).
-// Reset = "отбросить к началу": последовательно вызывает Undo, пока история не пуста.
+// Reset — откат до начального состояния: последовательный Undo до пустой истории
 public class CommandManager
 {
     private readonly Stack<ICommand> _history = new();
@@ -38,7 +37,6 @@ public class CommandManager
         return true;
     }
 
-    // Откат к начальному состоянию — пока история не пуста, Undo'шим
     public void Reset()
     {
         while (CanUndo) Undo();

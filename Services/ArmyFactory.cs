@@ -2,12 +2,9 @@ using BattleGame.Units;
 
 namespace BattleGame.Services;
 
-// Паттерн Singleton: единственный экземпляр фабрики армий.
-// Использует IUnitFactory (абстрактная фабрика) для создания юнитов.
-// Содержит фабричный метод CreateByBudget для создания армии по бюджету.
+// Singleton + Abstract Factory: один экземпляр, делегирует создание юнитов IUnitFactory
 public class ArmyFactory
 {
-    // --- Singleton ---
     private static ArmyFactory? _instance;
     public static ArmyFactory Instance => _instance ??= new ArmyFactory(new RandomUnitFactory());
 
@@ -19,7 +16,6 @@ public class ArmyFactory
         _unitFactory = unitFactory;
     }
 
-    // Создание армии со случайным составом (по количеству)
     public Army CreateRandom(string name, int unitCount, string tag = "")
     {
         var army = new Army { Name = name };
@@ -30,7 +26,6 @@ public class ArmyFactory
         return army;
     }
 
-    // Фабричный метод: создание армии по бюджету (стоимости).
     public Army CreateByBudget(string name, int budget, string tag = "")
     {
         var army = new Army { Name = name };
@@ -57,7 +52,6 @@ public class ArmyFactory
         return army;
     }
 
-    // Создание армии вручную с бюджетом
     public Army CreateManualByBudget(string name, int budget, string tag = "")
     {
         var army = new Army { Name = name };

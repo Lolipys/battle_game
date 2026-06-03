@@ -2,23 +2,19 @@ using BattleGame.Interfaces;
 
 namespace BattleGame.Units;
 
-// Маг — с маленькой вероятностью клонирует союзника и ставит его перед собой.
-// Реализует ISpecialAbility. НЕ реализует ICanBeHealed, ICanBeCloned.
-// Клонирует только юнитов с ICanBeCloned (Light, Archer) в пределах Range.
+// Роль: поддержка. Клонирует ICanBeCloned-союзников, вставляя клона перед собой
+// НЕ реализует ICanBeHealed, ICanBeCloned
 public class Wizard : Unit, ISpecialAbility
 {
     public const int BaseDamage = 6;
     public const int BaseDefense = 2;
     public const int BaseHealth = 45;
     public const int BaseRange = 3;
-    public const int BasePower = 0;        // Power не используется (клон, а не урон)
-    public const int BaseCloneChance = 30; // вероятность клонирования в процентах
+    public const int BasePower = 0;
+    public const int BaseCloneChance = 30;
 
-    // Радиус: маг на позиции N может клонировать юнитов в пределах Range позиций от себя
     public int Range { get; set; }
     public int Power { get; set; }
-
-    // Шанс клонирования (0–100%)
     public int CloneChance { get; set; }
 
     public Wizard() { }
@@ -35,8 +31,7 @@ public class Wizard : Unit, ISpecialAbility
         CloneChance = cloneChance;
     }
 
-    // UseAbility у мага не наносит урон — клонирование обрабатывается в Battlefield.
-    // Этот метод нужен только для совместимости с ISpecialAbility.
+    // клонирование обрабатывается в Battlefield.ProcessWizard; метод нужен для ISpecialAbility
     public int UseAbility(Unit target)
     {
         return 0;

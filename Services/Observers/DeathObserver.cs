@@ -3,9 +3,7 @@ using BattleGame.Units;
 
 namespace BattleGame.Services.Observers;
 
-// Наблюдатель смерти: реагирует на одно событие — OnDeath.
-// Делегирует вывод сообщения IBattleLogger и ведёт счёт потерь по армиям.
-// Заменяет SoundLoggerProxy: вместо обёртки логгера — отдельная подписка.
+// заменяет SoundLoggerProxy — вместо Proxy-обёртки логгера теперь отдельная подписка
 public class DeathObserver : IBattleObserver
 {
     private readonly IBattleLogger _logger;
@@ -28,7 +26,7 @@ public class DeathObserver : IBattleObserver
             _deathCount[army.Name] = 1;
     }
 
-    // Этот наблюдатель НЕ слушает урон — это работа DamageObserver.
+    // пустая реализация: урон отслеживает DamageObserver
     public void OnDamage(Unit target, Army army, int damage, int hpBefore) { }
 
     public void OnTurnStarted(int turnNumber) { }

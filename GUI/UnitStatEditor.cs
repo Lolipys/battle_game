@@ -4,10 +4,8 @@ using BattleGame.Units;
 
 namespace BattleGame.GUI;
 
-/// <summary>
 /// Диалог кастомизации характеристик юнита перед добавлением в армию.
 /// Показывает случайные базовые значения из фабрики и позволяет изменить их.
-/// </summary>
 public sealed class UnitStatEditor : Form
 {
     private readonly Unit   _template;
@@ -15,16 +13,16 @@ public sealed class UnitStatEditor : Form
 
     public Unit? Result { get; private set; }
 
-    // Controls
+    // Элементы управления
     private NumericUpDown _nudAtk   = null!;
     private NumericUpDown _nudDef   = null!;
     private NumericUpDown _nudHp    = null!;
-    private NumericUpDown _nudExtra1 = null!;   // Range / —
-    private NumericUpDown _nudExtra2 = null!;   // Power / CloneChance / —
+    private NumericUpDown _nudExtra1 = null!;   // Дальность / —
+    private NumericUpDown _nudExtra2 = null!;   // Сила / Шанс клона / —
     private Label         _lblPrice  = null!;
     private Button        _btnOk     = null!;
 
-    // Palette
+    // Палитра
     static readonly Color BgC    = Color.FromArgb(24, 24, 34);
     static readonly Color SurfC  = Color.FromArgb(34, 34, 48);
     static readonly Color ElevC  = Color.FromArgb(48, 48, 66);
@@ -57,7 +55,7 @@ public sealed class UnitStatEditor : Form
         int  formH      = 290 + extraRows * 46;
         Size = new Size(370, formH);
 
-        // ── Title bar ─────────────────────────────────────────────────────
+        // Заголовок
         var top = new Panel { Dock = DockStyle.Top, Height = 44, BackColor = Color.FromArgb(30, 30, 44) };
         top.Paint += (_, e) =>
         {
@@ -73,7 +71,7 @@ public sealed class UnitStatEditor : Form
             Location  = new Point(12, 10)
         });
 
-        // ── Stat fields ───────────────────────────────────────────────────
+        // Поля характеристик
         var body = new Panel
         {
             Location  = new Point(0, 44),
@@ -83,7 +81,7 @@ public sealed class UnitStatEditor : Form
 
         int y = 14;
 
-        // ATK
+        // Атака
         if (!isGulyay)
         {
             AddRow(body, "Атака (ATK):", "Урон в ближнем бою", ref y,
@@ -91,18 +89,18 @@ public sealed class UnitStatEditor : Form
         }
         else
         {
-            _nudAtk = new NumericUpDown { Value = 0 }; // dummy
+            _nudAtk = new NumericUpDown { Value = 0 }; // заглушка, Гуляй-город не атакует
         }
 
-        // DEF
+        // Защита
         AddRow(body, "Защита (DEF):", "Снижает входящий урон", ref y,
                out _nudDef, 0, 999, _template.Defense);
 
-        // HP
+        // Здоровье
         AddRow(body, "HP (здоровье):", "Максимальное количество очков здоровья", ref y,
                out _nudHp, 1, 9999, _template.Health);
 
-        // Extra fields for ranged/heal/wizard
+        // Дополнительные поля для лучника / хилера / мага
         if (hasRange)
         {
             string extra1Label = "Дальность:";
@@ -124,7 +122,7 @@ public sealed class UnitStatEditor : Form
             _nudExtra2 = new NumericUpDown { Value = 20 };
         }
 
-        // Price preview
+        // Предпросмотр цены
         var sepLine = new Panel { Location = new Point(12, y + 4), Size = new Size(346, 1), BackColor = Color.FromArgb(50, 50, 70) };
         body.Controls.Add(sepLine);
         y += 14;
@@ -139,7 +137,7 @@ public sealed class UnitStatEditor : Form
         body.Controls.Add(_lblPrice);
         y += 28;
 
-        // Buttons
+        // Кнопки
         _btnOk = new Button
         {
             Text      = "✔  Добавить в армию",
@@ -174,7 +172,7 @@ public sealed class UnitStatEditor : Form
         Controls.Add(top);
         Controls.Add(body);
 
-        // Wire value-changed events for live price update
+        // Подписываемся на изменения для живого расчёта цены
         foreach (var n in new[] { _nudAtk, _nudDef, _nudHp, _nudExtra1, _nudExtra2 })
             n.ValueChanged += (_, _) => RefreshPrice();
 

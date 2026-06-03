@@ -8,12 +8,10 @@ using BattleGame.Units;
 
 namespace BattleGame;
 
-// Ядро игры — управляет боем между двумя армиями.
-// Демо 3:
-//   • Strategy   — фаза ближнего боя делегируется IBattleStrategy (3 режима, смена в любой момент).
-//   • Observer   — DeathObserver, DamageObserver подписаны на события урона/смерти/начала хода.
-//   • Decorator  — лёгкие пехотинцы (оруженосцы) надевают баффы на соседних тяжёлых.
-//   • Ничья      — DamageObserver сигнализирует пат через 10 ходов без урона.
+// Strategy  — фаза ближнего боя делегируется IBattleStrategy (3 режима)
+// Observer  — DeathObserver, DamageObserver подписаны на события боя
+// Decorator — LightInfantry-оруженосцы надевают баффы на тяжёлых
+// Ничья     — DamageObserver: 10 ходов без урона = пат
 public class Battlefield
 {
     private static readonly Random Rng = new();
@@ -22,7 +20,7 @@ public class Battlefield
     public Army Army2 { get; set; } = new();
     public int TurnNumber { get; set; }
 
-    // Имя текущей стратегии (сериализуется), реальный объект — резолвится в SetStrategy.
+    // Имя текущей стратегии (сериализуется), реальный объект — резолвится в SetStrategy
     public string StrategyName { get; set; } = "";
 
     [JsonIgnore]
@@ -49,7 +47,6 @@ public class Battlefield
         SetStrategy(new BridgeStrategy());
     }
 
-    // --- Подписка наблюдателей (паттерн Observer) ---
     public void Subscribe(IBattleObserver observer)
     {
         if (!_observers.Contains(observer))
@@ -80,7 +77,6 @@ public class Battlefield
         foreach (var o in _observers) o.OnTurnStarted(turn);
     }
 
-    // --- Stratergy: смена в любой момент игры ---
     public void SetStrategy(IBattleStrategy strategy)
     {
         Strategy = strategy;
@@ -88,7 +84,6 @@ public class Battlefield
         Logger?.StrategyChanged(strategy.Name);
     }
 
-    // Один игровой ход: ближний бой (стратегия) → спецспособности → очистка → проверка победы
     public void MakeTurn()
     {
         if (IsGameOver)
@@ -129,8 +124,7 @@ public class Battlefield
         Logger.GameOver(GetWinner());
     }
 
-    // --- Фаза 2: Спецспособности ---
-    // Хилер → лечит, Маг → клонирует, Лучник → стреляет, Лёгкий → оруженосец (декоратор).
+    // Фаза 2: спецспособности
     private void SpecialAbilityPhase()
     {
         bool any = HasAbilityUsers(Army1) || HasAbilityUsers(Army2);
@@ -146,7 +140,6 @@ public class Battlefield
     {
         for (int i = 0; i < army.Units.Count; i++)
         {
-            // На фронте обычно бьют в melee, но если фронта нет (армия пустая) — пропускаем
             if (army.Units[i] is ISpecialAbility) return true;
         }
         return false;
@@ -162,28 +155,25 @@ public class Battlefield
 
             int position = i + 1;
 
-            // Лёгкий пехотинец-оруженосец: надевает бафф на соседнего тяжёлого
             if (UnitBuff.Unwrap(u) is LightInfantry light)
             {
                 ProcessSquire(light, allies, i);
                 continue;
             }
 
-            // Хилер
             if (UnitBuff.Unwrap(u) is Healer healer)
             {
                 ProcessHealer(healer, allies, i);
                 continue;
             }
 
-            // Маг
             if (UnitBuff.Unwrap(u) is Wizard wizard)
             {
                 ProcessWizard(wizard, allies, i);
                 continue;
             }
 
-            // Стрелок: пропускаем фронт (он бил в melee), проверяем дальность
+            // i == 0: фронт уже участвовал в MeleePhase
             if (i == 0) continue;
             if (ability.Range < position)
             {
@@ -204,14 +194,11 @@ public class Battlefield
         }
     }
 
-    // Оруженосец (Light Infantry) — надевает бафф на соседнего тяжёлого пехотинца.
-    // Если рядом стоят два лёгких — оба могут наделить тяжёлого баффами.
+    // два лёгких рядом — оба могут надеть баффы на одного тяжёлого (один за ход каждый)
     private void ProcessSquire(LightInfantry squire, Army allies, int squireIndex)
     {
-        // Шанс не сработал
         if (Rng.Next(100) >= squire.BuffChance) return;
 
-        // Ищем тяжёлого в радиусе Range (по умолчанию 1 — соседи)
         for (int delta = -squire.Range; delta <= squire.Range; delta++)
         {
             if (delta == 0) continue;
@@ -222,7 +209,6 @@ public class Battlefield
             if (!neighbor.IsAlive) continue;
             if (UnitBuff.Unwrap(neighbor) is not HeavyInfantry) continue;
 
-            // Выбираем случайный бафф, который ещё не висит
             string[] available = { HorseBuff.Tag, SpearBuff.Tag, ShieldBuff.Tag, HelmetBuff.Tag };
             var slots = available.Where(b => !UnitBuff.HasBuff(neighbor, b)).ToList();
             if (slots.Count == 0) continue;
@@ -238,7 +224,7 @@ public class Battlefield
 
             allies.Units[j] = decorated;
             Logger.BuffApplied(allies.Units[squireIndex], decorated, chosen);
-            return;  // один бафф за ход
+            return;  // один бафф за ход от каждого оруженосца
         }
     }
 
@@ -270,7 +256,7 @@ public class Battlefield
     {
         int position = wizardIndex + 1;
 
-        // Защита: CloneChance в [0..100]
+        // зажимаем в [0..100] на случай кастомных характеристик из UI
         int chance = Math.Max(0, Math.Min(100, wizard.CloneChance));
         if (Rng.Next(100) >= chance)
         {
@@ -301,11 +287,9 @@ public class Battlefield
         Logger.CloneUsed(wizard, original, clone, position);
     }
 
-    // --- Фаза 3: очистка поля + сбитие баффов от больших ударов ---
+    // Фаза 3: очистка + сбитие баффов от сильных ударов (HP < 50% MaxHP → 30% шанс)
     private void CleanupPhase()
     {
-        // Перед удалением — попытка сбить бафф у получивших большой урон в этом ходе
-        // (упрощённое правило: если HP < 50% MaxHP — 30% шанс сбить случайный бафф)
         StripBuffsOnHardHits(Army1);
         StripBuffsOnHardHits(Army2);
 
@@ -329,7 +313,6 @@ public class Battlefield
             var u = army.Units[i];
             if (u is not UnitBuff topBuff) continue;
             if (u.MaxHealth <= 0) continue;
-            // Сильный удар = HP опустилось ниже 50% от MaxHP
             if (u.Health * 2 >= u.MaxHealth) continue;
             if (Rng.Next(100) >= 30) continue;
 
@@ -347,7 +330,6 @@ public class Battlefield
         return null;
     }
 
-    // --- Snapshot / Restore (для Command/Undo) ---
     private static readonly JsonSerializerOptions SnapOpts = new() { WriteIndented = false };
 
     public string Snapshot() => JsonSerializer.Serialize(this, SnapOpts);
@@ -360,6 +342,6 @@ public class Battlefield
         Army2 = restored.Army2;
         TurnNumber = restored.TurnNumber;
         StrategyName = restored.StrategyName;
-        // Strategy-объект восстанавливается по имени снаружи (CommandManager или Program)
+        // Strategy восстанавливается по StrategyName снаружи (в MakeTurnCommand.Undo)
     }
 }

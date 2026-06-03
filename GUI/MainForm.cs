@@ -10,7 +10,7 @@ namespace BattleGame.GUI;
 
 public sealed class MainForm : Form
 {
-    // ── State ────────────────────────────────────────────────────────────────
+    // Состояние
     private readonly string _savesDir;
     private Battlefield?   _bf;
     private CommandManager? _cmds;
@@ -18,7 +18,7 @@ public sealed class MainForm : Form
     private bool            _playing;
     private bool            _bannerShown;
 
-    // ── Palette ──────────────────────────────────────────────────────────────
+    // Палитра 
     static readonly Color BgC     = Color.FromArgb(20, 20, 28);
     static readonly Color SurfC   = Color.FromArgb(30, 30, 40);
     static readonly Color ElevC   = Color.FromArgb(48, 48, 60);
@@ -28,7 +28,7 @@ public sealed class MainForm : Form
     static readonly Color GreenBt = Color.FromArgb(38, 78, 38);
     static readonly Color RedBt   = Color.FromArgb(100, 30, 30);
 
-    // ── Controls ─────────────────────────────────────────────────────────────
+    // Элементы управления
     private BattleFieldPanel _bfPanel  = null!;
     private RichTextBox      _log      = null!;
     private Label            _lblTurn  = null!;
@@ -41,7 +41,6 @@ public sealed class MainForm : Form
     private Button           _btnReset = null!;
     private Button           _btnStrat = null!;
 
-    // ────────────────────────────────────────────────────────────────────────
     public MainForm(string savesDir)
     {
         _savesDir = savesDir;
@@ -49,7 +48,7 @@ public sealed class MainForm : Form
         ShowWelcome();
     }
 
-    // ── Layout ───────────────────────────────────────────────────────────────
+    //Компоновка 
 
     private void Build()
     {
@@ -61,10 +60,10 @@ public sealed class MainForm : Form
         Font          = new Font("Segoe UI", 9f);
         StartPosition = FormStartPosition.CenterScreen;
 
-        // ── TOP BAR ─────────────────────────────────────────────────────
+        //  ВЕРХНЯЯ ПАНЕЛЬ
         var top = new Panel { Dock = DockStyle.Top, Height = 52, BackColor = SurfC };
 
-        // Left fixed block
+        // Левый фиксированный блок
         var lblTitle = new Label
         {
             Text      = "⚔  АРЕНА",
@@ -79,7 +78,7 @@ public sealed class MainForm : Form
         _btnSave    = MakeBtn("Сохранить",   98, ElevC); _btnSave.Location = new Point(343, 10);
         _btnSave.Enabled = false;
 
-        // Strategy label — fills remaining space, anchored left+right
+        // Метка стратегии — растягивается по оставшемуся месту
         _lblStrat = new Label
         {
             Text      = "Построение: ─",
@@ -91,7 +90,7 @@ public sealed class MainForm : Form
             Anchor    = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top
         };
 
-        // Turn counter — anchored to right edge
+        // Счётчик хода — прижат к правому краю
         _lblTurn = new Label
         {
             Text      = "Ход: ─",
@@ -118,7 +117,7 @@ public sealed class MainForm : Form
         top.Controls.AddRange(new Control[]
             { lblTitle, btnNew, btnLoad, _btnSave, _lblStrat, _lblTurn });
 
-        // ── BATTLEFIELD ──────────────────────────────────────────────────
+        // ПОЛЕ БОЯ 
         _bfPanel = new BattleFieldPanel
         {
             Dock      = DockStyle.Top,
@@ -126,7 +125,7 @@ public sealed class MainForm : Form
             BackColor = Color.FromArgb(15, 15, 22)
         };
 
-        // ── LOG ──────────────────────────────────────────────────────────
+        // ЛОГ 
         _log = new RichTextBox
         {
             Dock        = DockStyle.Fill,
@@ -139,7 +138,7 @@ public sealed class MainForm : Form
             Padding     = new Padding(6, 0, 0, 0)
         };
 
-        // ── BOTTOM BUTTONS ───────────────────────────────────────────────
+        // НИЖНЯЯ ПАНЕЛЬ КНОПОК
         var bot = new Panel { Dock = DockStyle.Bottom, Height = 52, BackColor = SurfC };
 
         _btnTurn  = MakeBtn("⚔  Сделать ход",  152, GreenBt);
@@ -168,7 +167,7 @@ public sealed class MainForm : Form
         bot.Controls.AddRange(new Control[]
             { _btnTurn, _btnPlay, _btnUndo, _btnRedo, _btnReset, _btnStrat });
 
-        // ── COMPOSE ──────────────────────────────────────────────────────
+        // СБОРКА 
         Controls.Add(top);
         Controls.Add(bot);
         Controls.Add(_bfPanel);
@@ -179,7 +178,7 @@ public sealed class MainForm : Form
         KeyDown   += OnKeyDown;
     }
 
-    // ── Keyboard shortcuts ───────────────────────────────────────────────────
+    // Горячие клавиши
     private void OnKeyDown(object? s, KeyEventArgs e)
     {
         if (!_btnTurn.Enabled) return;
@@ -189,7 +188,7 @@ public sealed class MainForm : Form
         if (e.Control && e.KeyCode == Keys.Y) { OnRedo(); e.Handled = true; }
     }
 
-    // ── Battlefield setup ────────────────────────────────────────────────────
+    // Инициализация поля боя 
 
     private void ShowWelcome()
     {
@@ -202,10 +201,10 @@ public sealed class MainForm : Form
     {
         _bf = bf;
 
-        // Create logger
+        // Создаём логгер
         _guiLogger = new GuiLogger(_log, RefreshUI);
 
-        // Wire animation callbacks
+        // Привязываем анимационные callbacks
         _guiLogger.VisualMeleeAttack = (att, def) =>
         {
             bool isThread = _bfPanel.InvokeRequired;
@@ -231,7 +230,7 @@ public sealed class MainForm : Form
             if (isThread) _bfPanel.Invoke(Act); else Act();
             Sounds.Death();
             if (isThread && _guiLogger.AnimDelay > 0)
-                Thread.Sleep(_guiLogger.AnimDelay);   // pause so user sees death
+                Thread.Sleep(_guiLogger.AnimDelay);   // пауза, чтобы игрок успел увидеть гибель юнита
         };
 
         _guiLogger.VisualHeal = (healer, target, amount) =>
@@ -261,17 +260,17 @@ public sealed class MainForm : Form
         SetButtons(true);
     }
 
-    // ── RefreshUI ────────────────────────────────────────────────────────────
+    // Обновление интерфейса 
 
     private void RefreshUI()
     {
         if (InvokeRequired) { Invoke(RefreshUI); return; }
         if (_bf == null) return;
 
-        // Update battlefield panel
+        // Обновляем панель поля боя
         _bfPanel.SetBattlefield(_bf.Army1, _bf.Army2, _bf.Strategy?.Name);
 
-        // Labels
+        // Метки
         _lblTurn.Text  = $"Ход: {_bf.TurnNumber}";
         _lblStrat.Text = $"Построение: {_bf.Strategy?.Name ?? "─"}";
 
@@ -306,7 +305,7 @@ public sealed class MainForm : Form
         Sounds.Victory();
     }
 
-    // ── Button handlers ──────────────────────────────────────────────────────
+    // Обработчики кнопок 
 
     private void OnNewGame(object? s, EventArgs e)
     {
@@ -412,7 +411,7 @@ public sealed class MainForm : Form
     private void OnMakeTurn()
     {
         if (_bf == null || _cmds == null) return;
-        _guiLogger!.AnimDelay = 0; // instant on single turn
+        _guiLogger!.AnimDelay = 0; // мгновенный режим для одного хода
         _cmds.Execute(new MakeTurnCommand(_bf, _bf.DamageObserver));
         RefreshUI();
     }
@@ -421,7 +420,7 @@ public sealed class MainForm : Form
     {
         if (_bf == null || _cmds == null) return;
         _playing = true;
-        _guiLogger!.AnimDelay = 320; // animated on auto-play
+        _guiLogger!.AnimDelay = 320; // анимация при авто-бое
         RefreshUI();
         try
         {
@@ -507,7 +506,7 @@ public sealed class MainForm : Form
         }
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // Вспомогательные методы 
 
     private void SetButtons(bool enabled)
     {
@@ -538,7 +537,7 @@ public sealed class MainForm : Form
     };
 }
 
-// ── Sound effects via System.Media (non-blocking, no console dependency) ─────
+// Звуковые эффекты через System.Media (неблокирующие) 
 internal static class Sounds
 {
     public static void Attack()  => Try(System.Media.SystemSounds.Beep.Play);

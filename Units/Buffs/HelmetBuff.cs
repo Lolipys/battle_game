@@ -1,6 +1,6 @@
 namespace BattleGame.Units;
 
-// Шлем: +защита (меньше, чем у щита).
+// Шлем: +защита (меньше, чем у щита)
 public class HelmetBuff : UnitBuff
 {
     public const string Tag = "Шлем";

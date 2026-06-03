@@ -3,9 +3,9 @@ using BattleGame.Units;
 
 namespace BattleGame.Services.Strategies;
 
-// Режим 1 — узкий мост.
-// Бьются только первые юниты обеих армий: A1[0] vs A2[0].
-// Если защитник погибает — ответного удара нет.
+// Режим 1 - узкий мост
+// Бьются только первые юниты обеих армий: A1[0] против A2[0]
+// Если защитник погибает - ответного удара нет
 public class BridgeStrategy : IBattleStrategy
 {
     public string Name => "Узкий мост (1 vs 1)";

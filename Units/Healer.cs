@@ -2,22 +2,18 @@ using BattleGame.Interfaces;
 
 namespace BattleGame.Units;
 
-// Хилер — лечит союзников в радиусе действия.
-// Реализует ISpecialAbility: лечение = «атака с отрицательным уроном».
-// ICanBeHealed — другой хилер может лечить этого.
-// НЕ реализует ICanBeCloned — маг не может клонировать хилера.
+// Роль: поддержка. Лечит ICanBeHealed-союзников в радиусе Range
+// НЕ реализует ICanBeCloned — маг не клонирует хилеров
 public class Healer : Unit, ISpecialAbility, ICanBeHealed
 {
     public const int BaseDamage = 5;
     public const int BaseDefense = 2;
     public const int BaseHealth = 50;
     public const int BaseRange = 3;
-    public const int BasePower = 20;  // сила лечения
+    public const int BasePower = 20;
 
-    // Дальность: хилер на позиции N лечит, если Range >= N
+    // позиция N лечит, если Range >= N (та же семантика, что у Archer)
     public int Range { get; set; }
-
-    // Сила лечения (аналог Power у лучника, но восстанавливает HP)
     public int Power { get; set; }
 
     public Healer() { }
@@ -33,10 +29,7 @@ public class Healer : Unit, ISpecialAbility, ICanBeHealed
         Power = power;
     }
 
-    // UseAbility у хилера вызывается с союзником, не с врагом.
-    // Лечение реализовано как «атака с отрицательным уроном»:
-    // HP цели увеличивается, но не выше MaxHealth.
-    // Возвращает количество восстановленного HP.
+    // HP не превысит MaxHealth; возвращает реально восстановленное количество
     public int UseAbility(Unit target)
     {
         int healAmount = Math.Min(Power, target.MaxHealth - target.Health);

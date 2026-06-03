@@ -4,7 +4,7 @@ using BattleGame.Services.Strategies;
 
 namespace BattleGame.Services.Commands;
 
-// Команда "играть до конца" — снимок один в начале, Undo откатывает к этому снимку.
+// один снимок в начале: PlayToEnd может сыграть 100 ходов, откат — одним Undo
 public class PlayToEndCommand : ICommand
 {
     private readonly Battlefield _bf;

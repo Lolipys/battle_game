@@ -3,8 +3,6 @@ using BattleGame.Units;
 
 namespace BattleGame.Services;
 
-// Реализация IBattleLogger — цветной вывод боевых событий в консоль.
-// Принцип S (SOLID): отвечает ТОЛЬКО за отображение, не содержит логику боя.
 public class BattleLog : IBattleLogger
 {
     public void TurnHeader(int turn)
@@ -28,7 +26,6 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // Cyan — атака, видно кто кого бьёт
     public void MeleeAttack(Unit attacker, Unit defender, int damage, int hpBefore)
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
@@ -39,7 +36,6 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // Magenta — ответный удар, визуально отличается от основной атаки
     public void CounterAttack(Unit defender, Unit attacker, int damage, int hpBefore)
     {
         Console.ForegroundColor = ConsoleColor.Magenta;
@@ -50,7 +46,6 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // Green — спецспособность, показывает позицию и дальность стрелка
     public void AbilityUsed(Unit user, Unit target, int damage, int position, int range, int hpBefore)
     {
         Console.ForegroundColor = ConsoleColor.Green;
@@ -61,7 +56,6 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // DarkGray — не достаёт, менее важная информация
     public void AbilityOutOfRange(Unit user, int position, int range)
     {
         Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -69,8 +63,7 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // Red — гибель юнита, сразу бросается в глаза.
-    // Вызывается из DeathObserver, не напрямую из Battlefield.
+    // вызывается из DeathObserver, не напрямую из Battlefield
     public void UnitDied(Unit unit, string armyName)
     {
         Console.ForegroundColor = ConsoleColor.Red;
@@ -114,7 +107,6 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // Blue — лечение союзника
     public void HealUsed(Unit healer, Unit target, int healAmount, int position, int range)
     {
         Console.ForegroundColor = ConsoleColor.Blue;
@@ -125,7 +117,6 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // DarkCyan — клонирование
     public void CloneUsed(Unit wizard, Unit original, Unit clone, int position)
     {
         Console.ForegroundColor = ConsoleColor.DarkCyan;
@@ -134,7 +125,6 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // DarkGray — клонирование не сработало
     public void CloneFailed(Unit wizard, int position)
     {
         Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -142,7 +132,6 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // Green — оруженосец надел бафф на тяжёлого
     public void BuffApplied(Unit squire, Unit target, string buffName)
     {
         Console.ForegroundColor = ConsoleColor.Green;
@@ -150,7 +139,6 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // DarkGray — бафф был сбит ударом
     public void BuffStripped(Unit target, string buffName)
     {
         Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -165,7 +153,6 @@ public class BattleLog : IBattleLogger
         Console.ResetColor();
     }
 
-    // Вывод состава обеих армий — вызывается после каждого хода и по запросу
     public void PrintArmyStatus(Army army1, Army army2)
     {
         Console.WriteLine();

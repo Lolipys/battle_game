@@ -1,7 +1,6 @@
 namespace BattleGame.Interfaces;
 
-// Паттерн Command: каждый пункт меню — это команда, которую можно Execute / Undo.
-// CommandManager держит стеки истории и redo.
+// Command: каждое действие игрока — Execute / Undo; стеки управляет CommandManager
 public interface ICommand
 {
     string Description { get; }

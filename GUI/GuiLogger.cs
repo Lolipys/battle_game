@@ -10,15 +10,15 @@ internal sealed class GuiLogger : IBattleLogger
     private readonly RichTextBox _log;
     private readonly Action _refresh;
 
-    // Visual callbacks — set by MainForm after creating logger.
-    // All callbacks run on background thread (battle thread); use Invoke if needed.
-    internal Action<Unit, Unit>? VisualMeleeAttack;   // attacker, defender
-    internal Action<Unit, Unit>? VisualRangedAttack;  // shooter, target
-    internal Action<Unit, string>? VisualDeath;       // dying unit, army name
-    internal Action<Unit, Unit, int>? VisualHeal;     // healer, target, amount
-    internal Action<Unit, Unit>? VisualClone;         // wizard, original
+    // Визуальные callbacks — устанавливаются из MainForm после создания логгера.
+    // Все callbacks выполняются в фоновом потоке; при необходимости используй Invoke.
+    internal Action<Unit, Unit>? VisualMeleeAttack;   // атакующий, защитник
+    internal Action<Unit, Unit>? VisualRangedAttack;  // стрелок, цель
+    internal Action<Unit, string>? VisualDeath;       // гибнущий юнит, имя армии
+    internal Action<Unit, Unit, int>? VisualHeal;     // хилер, цель, количество HP
+    internal Action<Unit, Unit>? VisualClone;         // маг, оригинал
 
-    // When > 0 — callbacks may Thread.Sleep for animation. Set 0 for fast mode.
+    // > 0 — callbacks делают Thread.Sleep для анимации; 0 — мгновенный режим
     internal int AnimDelay = 350;
 
     internal GuiLogger(RichTextBox log, Action refresh)

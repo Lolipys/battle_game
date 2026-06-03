@@ -1,6 +1,6 @@
 namespace BattleGame.Units;
 
-// Конь: +атака и +защита. Самый сильный бафф.
+// Конь: +атака и +защита. Самый сильный бафф
 public class HorseBuff : UnitBuff
 {
     public const string Tag = "Конь";

@@ -140,8 +140,8 @@ public sealed class ManualArmyForm : Form
             Dock          = DockStyle.Fill,
             BackColor     = BgC,
             SplitterWidth = 4
-            // Panel1MinSize / Panel2MinSize / SplitterDistance are set in Load
-            // because the control has zero width in the constructor and throws
+            // Panel1MinSize / Panel2MinSize / SplitterDistance задаются в Load,
+            // т.к. в конструкторе ширина ещё 0 и метод бросает исключение
         };
         Load += (_, _) =>
         {
@@ -406,7 +406,7 @@ public sealed class ManualArmyForm : Form
         var t       = _types[typeIdx];
         var sample  = t.Creator(_factory, _nextNum, _tag);
 
-        // Show stat editor dialog
+        // Открываем редактор характеристик
         using var editor = new UnitStatEditor(sample, _remaining, t.Label, t.Accent);
         if (editor.ShowDialog(this) != DialogResult.OK || editor.Result == null) return;
 

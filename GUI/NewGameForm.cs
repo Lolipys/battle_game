@@ -7,13 +7,13 @@ using BattleGame.Services.Strategies;
 
 namespace BattleGame.GUI;
 
-/// <summary>Диалог «Новая игра»: бюджет, армии, режим, начальное построение.</summary>
+/// Диалог «Новая игра»: бюджет, армии, режим, начальное построение
 public sealed class NewGameForm : Form
 {
     private readonly string _savesDir;
     public Battlefield? Result { get; private set; }
 
-    // Controls
+    // Элементы управления
     private NumericUpDown _nudBudget  = null!;
     private TextBox       _tbArmy1   = null!;
     private TextBox       _tbArmy2   = null!;
@@ -24,7 +24,7 @@ public sealed class NewGameForm : Form
     private Button[]      _stratBtns = null!;
     private IBattleStrategy _selectedStrategy;
 
-    // Palette
+    // Палитра
     static readonly Color BgC    = Color.FromArgb(22, 22, 30);
     static readonly Color SurfC  = Color.FromArgb(32, 32, 44);
     static readonly Color ElevC  = Color.FromArgb(48, 48, 64);
@@ -56,7 +56,7 @@ public sealed class NewGameForm : Form
         ForeColor       = FgC;
         Font            = new Font("Segoe UI", 9.5f);
 
-        // ── Title bar ────────────────────────────────────────────
+        // Заголовок
         var titlePanel = new Panel
         {
             Dock      = DockStyle.Top,
@@ -78,7 +78,7 @@ public sealed class NewGameForm : Form
             e.Graphics.DrawLine(pen, 0, titlePanel.Height - 1, titlePanel.Width, titlePanel.Height - 1);
         };
 
-        // Main scrollable area
+        // Основная область
         var content = new Panel
         {
             Location  = new Point(0, 52),
@@ -89,7 +89,7 @@ public sealed class NewGameForm : Form
 
         int y = 16;
 
-        // ── Budget ───────────────────────────────────────────────
+        // Бюджет
         content.Controls.Add(MakeSectionLabel("Бюджет армии", 16, y));
         y += 22;
 
@@ -123,7 +123,7 @@ public sealed class NewGameForm : Form
             Font        = new Font("Segoe UI", 10f, FontStyle.Bold)
         };
 
-        // Preset budget buttons
+        // Пресеты бюджета
         var budgetPresets = new (string label, int val)[] { ("300", 300), ("500", 500), ("800", 800), ("1500", 1500) };
         int bx = 340;
         foreach (var (label, val) in budgetPresets)
@@ -151,7 +151,7 @@ public sealed class NewGameForm : Form
         content.Controls.Add(budgetRow);
         y += 48;
 
-        // ── Strategy ─────────────────────────────────────────────
+        // Стратегия 
         content.Controls.Add(MakeSectionLabel("Начальное построение", 16, y));
         y += 22;
 
@@ -206,7 +206,7 @@ public sealed class NewGameForm : Form
         content.Controls.Add(stratRow);
         y += 84;
 
-        // ── Army 1 ───────────────────────────────────────────────
+        //  Армия 1 
         content.Controls.Add(MakeSectionLabel("Армия 1", 16, y, A1C));
         y += 22;
         var gb1 = MakeArmyBox(A1C, out _tbArmy1, out _rbRand1, out _rbMan1, "Армия 1");
@@ -214,7 +214,7 @@ public sealed class NewGameForm : Form
         content.Controls.Add(gb1);
         y += gb1.Height + 12;
 
-        // ── Army 2 ───────────────────────────────────────────────
+        // Армия 2 
         content.Controls.Add(MakeSectionLabel("Армия 2", 16, y, A2C));
         y += 22;
         var gb2 = MakeArmyBox(A2C, out _tbArmy2, out _rbRand2, out _rbMan2, "Армия 2");
@@ -222,7 +222,7 @@ public sealed class NewGameForm : Form
         content.Controls.Add(gb2);
         y += gb2.Height + 16;
 
-        // ── Buttons ──────────────────────────────────────────────
+        // ── Кнопки
         var btnStart = new Button
         {
             Text      = "⚔  Начать битву!",
@@ -303,7 +303,7 @@ public sealed class NewGameForm : Form
             ForeColor = FgC
         };
 
-        // Unit info line
+        // Строка описания режима
         var infoLbl = new Label
         {
             Text      = "Случайная армия: юниты подбираются автоматически по бюджету",
@@ -313,7 +313,7 @@ public sealed class NewGameForm : Form
             Font      = new Font("Segoe UI", 8f)
         };
 
-        // Capture out-params into locals so lambdas can close over them
+        // Захватываем out-параметры в локальные переменные для замыканий
         var rbManRef  = rbMan;
         var rbRandRef = rbRand;
         void UpdateInfo()
@@ -326,7 +326,7 @@ public sealed class NewGameForm : Form
         rbRandRef.CheckedChanged += (_, _) => UpdateInfo();
         rbManRef.CheckedChanged  += (_, _) => UpdateInfo();
 
-        // Accent line at top
+        // Акцентная линия сверху
         panel.Paint += (s, e) =>
         {
             using var pen = new Pen(accent, 2f);

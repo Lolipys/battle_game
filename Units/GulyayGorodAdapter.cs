@@ -2,15 +2,13 @@ using MedievalRussia;
 
 namespace BattleGame.Units;
 
-// Адаптер (паттерн Adapter) для внешнего класса GulyayGorod из MedievalRussia.dll.
-// Оборачивает чужой API в наш Unit. Не атакует, не лечится, не клонируется.
-// НЕ реализует ICanBeHealed, ICanBeCloned, ISpecialAbility.
+// Adapter: оборачивает GulyayGorod из MedievalRussia.dll в нашу иерархию Unit
+// Не атакует, не лечится, не клонируется
 public class GulyayGorodAdapter : Unit
 {
     public const int BaseDefense = 30;
     public const int BaseHealth = 200;
 
-    // Внутренний объект из внешней DLL
     private GulyayGorod _inner;
 
     public GulyayGorodAdapter()
@@ -21,20 +19,20 @@ public class GulyayGorodAdapter : Unit
     public GulyayGorodAdapter(string name, int defense, int health)
     {
         Name = name;
-        Damage = 0;  // не атакует
+        Damage = 0;
         Defense = defense;
         Health = health;
         MaxHealth = health;
         _inner = new GulyayGorod(health, defense);
     }
 
-    // Переопределяем атаку: Гуляй-город не атакует, всегда 0 урона
+    // override скрывает Unit.Attack: GulyayGorod никогда не атакует
     public override int Attack(Unit target)
     {
         return 0;
     }
 
-    // Синхронизация: при получении урона обновляем и внутренний объект из DLL
+    // синхронизируем _inner, чтобы состояние DLL не рассинхронизировалось
     public override void TakeDamage(int damage)
     {
         Health = Math.Max(Health - damage, 0);
